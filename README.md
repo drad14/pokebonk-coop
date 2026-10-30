@@ -1,5 +1,7 @@
 # PokéBonk co-op 0.3.1
 
+For Render, see [RENDER-SETUP.md](RENDER-SETUP.md). Free hosting currently loses local saves on sleep/restart.
+
 Eight-player private co-op, shared party XP and animated Pokémon gacha. Tested against PokéBonk 0.8.81, build `mvv1omyf`. Separate from official accounts, servers, saves and rankings.
 
 ## Update an existing installation

@@ -19,7 +19,7 @@ const ORIGIN = 'https://pokebonk.com';
 const PORT = Number(process.env.PORT || 8777);
 const HOST = process.env.HOST || '127.0.0.1';
 const QUICK_TUNNEL = process.argv.includes('--internet');
-const PUBLIC_URL = publicOrigin(process.env.PUBLIC_URL);
+const PUBLIC_URL = publicOrigin(process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL);
 const INTERNET = QUICK_TUNNEL || !!PUBLIC_URL;
 if(QUICK_TUNNEL&&PUBLIC_URL)throw Error('Use PUBLIC_URL for cloud hosting or --internet for a temporary tunnel, not both');
 let publicUrl = PUBLIC_URL;

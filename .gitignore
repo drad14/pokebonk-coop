@@ -1,0 +1,12 @@
+node_modules/
+data/
+cache/
+backups/
+bin/
+work/
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.log
