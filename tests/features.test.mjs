@@ -50,13 +50,14 @@ test('eight peers share snapshots; ninth rejected; full-party host reconnect kee
     while(Date.now()<until){const found=peer.messages.find(predicate);if(found)return found;await new Promise(r=>setTimeout(r,10))}
     throw Error('Expected relay message was not received');
   };
+  let roomCode;
   const connect=key=>{
-    const ws=new WebSocket(url+'/?key='+key),peer={ws,messages:[],binary:[]};peers.push(peer);
+    const ws=new WebSocket(url+'/?key='+key+(roomCode?'&room='+roomCode:'&action=create')),peer={ws,messages:[],binary:[]};peers.push(peer);
     ws.on('message',(data,binary)=>binary?peer.binary.push(Buffer.from(data)):peer.messages.push(JSON.parse(data)));
     return peer;
   };
   try{
-    const first=connect('test-host');await wait(first,m=>m.t==='welcome');
+    const first=connect('test-host');roomCode=(await wait(first,m=>m.t==='welcome')).roomCode;assert.match(roomCode,/^\d{4}$/);
     for(let i=1;i<MAX_PLAYERS;i++)await wait(connect('test-'+i),m=>m.t==='welcome');
     await wait(first,m=>m.t==='roster'&&m.players.length===8);
     const extra=connect('ninth');const [code]=await once(extra.ws,'close');assert.equal(code,4008);
@@ -79,4 +80,30 @@ test('eight peers share snapshots; ninth rejected; full-party host reconnect kee
     for(const p of peers)p.ws.terminate();
     await new Promise(r=>wss.close(r));await new Promise(r=>server.close(r));
   }
+});
+
+
+test('explicit four-digit lobbies isolate players, runs, XP and binary snapshots',{timeout:15000},async()=>{
+  const server=http.createServer(),wss=new WebSocketServer({server});attachRelay(wss);
+  server.listen(0,'127.0.0.1');await once(server,'listening');
+  const url='ws://127.0.0.1:'+server.address().port,peers=[];
+  const connect=query=>{const ws=new WebSocket(url+'/?'+query),p={ws,messages:[],binary:[]};peers.push(p);ws.on('message',(d,b)=>b?p.binary.push(Buffer.from(d)):p.messages.push(JSON.parse(d)));return p};
+  const wait=async(p,pred)=>{for(let i=0;i<200;i++){const m=p.messages.find(pred);if(m)return m;await new Promise(r=>setTimeout(r,10))}throw Error('Missing room message')};
+  try{
+    const noRoom=connect('key=outsider');assert.equal((await once(noRoom.ws,'close'))[0],4004);
+    const a=connect('action=create&key=a'),aw=await wait(a,m=>m.t==='welcome');
+    assert.match(aw.roomCode,/^\d{4}$/);
+    const b=connect('action=create&key=b'),bw=await wait(b,m=>m.t==='welcome');assert.notEqual(aw.roomCode,bw.roomCode);
+    const guest=connect('room='+aw.roomCode+'&key=g');await wait(guest,m=>m.t==='welcome');await wait(a,m=>m.t==='roster'&&m.players.length===2);
+    assert.ok(b.messages.filter(m=>m.t==='roster').every(m=>m.players.length===1));
+    for(const t of ['start','xp'])a.ws.send(JSON.stringify({t,cfg:{seed:42},seed:42,level:5}));
+    a.ws.send(Buffer.from([9,8,7]));
+    await wait(guest,m=>m.t==='xp');await new Promise(r=>setTimeout(r,60));
+    assert.equal(guest.binary.length,1);assert.equal(b.binary.length,0);assert.ok(!b.messages.some(m=>['start','xp'].includes(m.t)));
+    guest.ws.send(JSON.stringify({t:'p',to:bw.id,x:99}));await new Promise(r=>setTimeout(r,40));assert.ok(!b.messages.some(m=>m.t==='p'));
+    a.ws.close();await once(a.ws,'close');guest.ws.close();await once(guest.ws,'close');await new Promise(r=>setTimeout(r,20));
+    const refreshed=connect('room='+aw.roomCode+'&key=a');await wait(refreshed,m=>m.t==='welcome');
+    await wait(refreshed,m=>m.t==='roster'&&m.players.length===1);
+    const invalid=connect('room=abcd');assert.equal((await once(invalid.ws,'close'))[0],4004);
+  }finally{for(const p of peers)p.ws.terminate();await new Promise(r=>wss.close(r));await new Promise(r=>server.close(r))}
 });

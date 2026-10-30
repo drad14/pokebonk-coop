@@ -7,6 +7,8 @@
   const LAN = (window.LAN = {
     privateHost: true,
     ws: null,
+    roomCode: null,
+    connecting: false,
     myId: null,
     hostId: null,
     roster: [],
@@ -25,18 +27,28 @@
 
   // ---------------------------------------------------------------- network
 
+  let roomRequest=null,retryTimer=null;
   function connect() {
-    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/lan/ws?key=${encodeURIComponent(TAB_KEY)}`);
+    if(!roomRequest)return;
+    clearTimeout(retryTimer);
+    LAN.connecting=true;
+    const request=roomRequest;
+    const query=request.create?'action=create':'room='+encodeURIComponent(request.code);
+    const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/lan/ws?${query}&key=${encodeURIComponent(TAB_KEY)}`);
     ws.binaryType = 'arraybuffer';
     LAN.ws = ws;
     ws.onopen = () => { LAN.connectionError=null; hello(); ui.refresh(); };
     ws.onclose = (event) => {
-      LAN.myId = null;
+      if(LAN.ws!==ws)return;
+      LAN.connecting=false;LAN.myId = null;LAN.hostId=null;LAN.roster=[];LAN.hostRun=null;
+      if(event.code===4004)LAN.connectionError='Lobby not found. Check the four-digit code or create a new lobby.';
+      if(event.code===4009)LAN.connectionError='Too many lobbies. Try again later.';
       if(event.code===4008)LAN.connectionError='Party full — 8 players maximum. Try again when a spot opens.';
       ui.refresh();
-      if(event.code!==4008)setTimeout(connect, 1500);
+      if(![4004,4008,4009].includes(event.code)&&roomRequest&&!roomRequest.create)retryTimer=setTimeout(connect,1500);
     };
     ws.onmessage = (ev) => {
+      if(LAN.ws!==ws)return;
       if (typeof ev.data !== 'string') return emit('binary', ev.data);
       let msg;
       try { msg = JSON.parse(ev.data); } catch { return; }
@@ -66,10 +78,11 @@
   // window.name survives reloads of the same tab/frame but isn't shared with
   // other tabs or frames.
   const TAB_KEY = (() => {
+    try{const saved=sessionStorage.getItem('pblan.tabKey');if(saved)return saved}catch{}
     const m = /^pblan:([a-z0-9]+)$/.exec(window.name || '');
-    if (m) return m[1];
+    if (m){try{sessionStorage.setItem('pblan.tabKey',m[1])}catch{}return m[1]}
     const k = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    try { window.name = 'pblan:' + k; } catch {}
+    try { window.name = 'pblan:' + k; sessionStorage.setItem('pblan.tabKey',k); } catch {}
     return k;
   })();
   LAN.key = TAB_KEY;
@@ -79,6 +92,8 @@
   }
 
   LAN.on('welcome', (m) => {
+    LAN.roomCode=m.roomCode;LAN.connecting=false;roomRequest={code:m.roomCode};
+    try{sessionStorage.setItem('pblan.room',m.roomCode)}catch{}
     LAN.maxPlayers=m.maxPlayers??8;
     LAN.myId = m.id;
     LAN.hostId = m.host;
@@ -508,6 +523,18 @@
     hello();ui.refresh();return true;
   };
   LAN.retry=()=>{LAN.connectionError=null;connect();ui.refresh()};
+  LAN.leaveRoom=()=>{
+    clearTimeout(retryTimer);roomRequest=null;
+    try{sessionStorage.removeItem('pblan.room')}catch{}
+    if(LAN.run?.__lan?.sync&&LAN.run.state!=='over')LAN.run.finish(false);
+    const ws=LAN.ws;LAN.ws=null;ws?.close(1000,'Left lobby');
+    LAN.roomCode=null;LAN.myId=null;LAN.hostId=null;LAN.roster=[];LAN.hostRun=null;LAN.connectionError=null;LAN.connecting=false;LAN.puppets.clear();ui.refresh();
+  };
+  LAN.createRoom=()=>{LAN.leaveRoom();roomRequest={create:true};connect();ui.refresh()};
+  LAN.joinRoom=code=>{
+    if(!/^\d{4}$/.test(String(code))){LAN.connectionError='Enter a four-digit lobby code.';ui.refresh();return}
+    LAN.leaveRoom();roomRequest={code:String(code)};connect();ui.refresh();
+  };
 
   // Addresses friends can use to join (shown on the Party screen).
   async function pollInfo() {
@@ -588,7 +615,8 @@
     };
   }
 
-  connect();
+  // Restore only this tab's explicitly chosen lobby on refresh.
+  try{const code=sessionStorage.getItem('pblan.room');if(/^\d{4}$/.test(code??'')){roomRequest={code};connect()}}catch{}
   keepHostAlive();
   requestAnimationFrame(watch);
   addEventListener('DOMContentLoaded', () => ui.refresh());

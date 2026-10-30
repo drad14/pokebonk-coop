@@ -1,8 +1,8 @@
-# PokéBonk co-op 0.3.1
+# PokéBonk co-op 0.3.2
 
 For Render, see [RENDER-SETUP.md](RENDER-SETUP.md). Free hosting currently loses local saves on sleep/restart.
 
-Eight-player private co-op, shared party XP and animated Pokémon gacha. Tested against PokéBonk 0.8.81, build `mvv1omyf`. Separate from official accounts, servers, saves and rankings.
+Four-digit private lobbies with eight-player co-op, shared party XP and animated Pokémon gacha. Tested against PokéBonk 0.8.81, build `mvv1omyf`. Separate from official accounts, servers, saves and rankings.
 
 ## Update an existing installation
 
@@ -15,7 +15,7 @@ Close the server window. Extract **PokeBonk-Coop-update-0.3.1.zip** directly int
 3. Run **Start PokeBonk Multiplayer.bat** and choose **2** for internet play.
 4. Host opens **http://localhost:8777** first and chooses **Play as a guest!**.
 5. Send friends the internet link from the console. They open it and choose **Play as a guest!**. No join username/password prompt and no extension install.
-6. Open **Party** on the main menu: up to **8 players including the host**. Everyone picks a Pokémon, then the host starts the run.
+6. Open **Party → Create lobby**. Share its four-digit code. Friends open **Party**, enter the code and press **Join lobby**. Up to **8 players including the host**. Everyone picks a Pokémon, then the host starts the run.
 
 Keep the server console and host's game tab open. Closing the console stops sharing. The internet link changes when the tunnel restarts; this is not 24/7 cloud hosting. Anyone with the current link can connect. First launch downloads dependencies, public game assets and Cloudflare's tunnel tool. Enable browser hardware acceleration for gameplay.
 
@@ -24,6 +24,10 @@ Keep the server console and host's game tab open. Closing the console stops shar
 The floating bottom-left control panel has been removed. **Party** and **Gacha** are normal main-menu tiles with the game's own icons, styling and keyboard/controller navigation. They occupy the tile spaces previously used for official-only Clan and Ranking services, which are unavailable on this private server.
 
 **Party** opens a native game screen with the player list, invite link, trainer-name field and graphics options. During a run, pause the game and choose **Party**. Back returns to the pause screen without ending or restarting the run. Player names/health bars above characters remain gameplay UI.
+
+## Lobbies
+
+Opening the website leaves you outside a party. Create a lobby or join by its four-digit code. Multiple parties have separate rosters, runs and XP. Leaving an empty lobby keeps its code available for 30 seconds for refresh/reconnect; restarting the server clears all lobbies. The same tab retains its player identity and chosen lobby on refresh, replacing its previous connection rather than adding another slot. This does not restore a running browser simulation after the host refreshes.
 
 ## Shared XP
 

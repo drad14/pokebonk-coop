@@ -1,3 +1,11 @@
+# 0.3.2: wrong party, bro
+
+- Opening the website no longer signs you up for somebody else’s adventure.
+- Create a lobby, share its four-digit code, and let up to eight friends assemble. Each lobby has its own world and XP.
+- Refreshing replaces your old connection instead of recruiting your own ghosts.
+- Lobby codes survive 30 seconds while empty for reconnects; server restarts clear them. Host refresh still ends the running match.
+- Tested separate-room snapshots/XP, capacity, reconnects, and a two-browser Create/Join/Leave flow with three refreshes.
+
 # 0.3.1: it lives in the game now
 
 - Removed the floating bottom-left control panel. It has officially moved out of the corner.

@@ -42,16 +42,21 @@
     const layout=node('div','pb-party-layout scroll');
     const players=node('section','panel pb-party-card');players.append(node('h2','','Your party'),node('p','muted','Up to 8 players. One shared XP bar.'));
     const list=node('div','pb-party-roster');list.setAttribute('aria-label','Party members');players.append(list);
+    const lobby=node('div','pb-party-lobby');
+    const create=button('Create lobby',()=>LAN.createRoom(),'btn green');create.dataset.action='create';
+    const joinForm=node('form','pb-party-name-form'),code=node('input','pb-party-code');code.type='text';code.inputMode='numeric';code.maxLength=4;code.pattern='[0-9]{4}';code.placeholder='4-digit code';code.required=true;code.autocomplete='off';code.setAttribute('aria-label','Four-digit lobby code');
+    const join=node('button','btn blue','Join lobby');join.type='submit';join.dataset.action='join';joinForm.append(code,join);joinForm.onsubmit=event=>{event.preventDefault();LAN.joinRoom(code.value.trim())};
+    const leave=button('Leave lobby',()=>LAN.leaveRoom());leave.dataset.action='leave';lobby.append(create,joinForm,leave);players.prepend(lobby);
     const status=node('p','pb-party-status');status.setAttribute('role','status');players.append(status);
     const hint=node('p','muted pb-party-hint');players.append(hint);
     const retry=button('Try joining again',()=>LAN.retry?.());retry.dataset.action='retry';players.append(retry);
     const side=node('div','pb-party-side');
-    const invite=node('section','panel pb-party-card');invite.append(node('h2','','Invite friends'),node('p','muted','Send this session link to your friends.'));
-    const link=node('input','pb-party-link');link.readOnly=true;link.setAttribute('aria-label','Session link');link.addEventListener('focus',()=>link.select());
+    const invite=node('section','panel pb-party-card');invite.append(node('h2','','Invite friends'),node('p','muted','Share your four-digit lobby code with friends.'));
+    const link=node('input','pb-party-link');link.readOnly=true;link.setAttribute('aria-label','Lobby code');link.addEventListener('focus',()=>link.select());
     const copied=node('p','muted pb-party-copy-status');copied.setAttribute('role','status');
-    const copy=button('Copy invite link',async()=>{
-      try{await navigator.clipboard.writeText(link.value);copied.textContent='Link copied. Send it to your friends.'}
-      catch{link.focus();link.select();copied.textContent='Link selected. Press Ctrl+C to copy it.'}
+    const copy=button('Copy lobby code',async()=>{
+      try{await navigator.clipboard.writeText(link.value);copied.textContent='Lobby code copied. Friends enter it in Party → Join lobby.'}
+      catch{link.focus();link.select();copied.textContent='Code selected. Press Ctrl+C to copy it.'}
     },'btn green');copy.dataset.action='copy';invite.append(link,copy,copied);
     const identity=node('section','panel pb-party-card');identity.append(node('h2','','Your trainer name'));
     const form=node('form','pb-party-name-form'),name=node('input','pb-party-name');name.maxLength=24;name.autocomplete='nickname';name.setAttribute('aria-label','Trainer name');
@@ -86,11 +91,11 @@
     const count=`${LAN.roster.length}/${LAN.maxPlayers} players`;
     if(homeControls?.screen?.isConnected){
       const target=homeControls.party;
-      target.querySelector('.mm-tx small').textContent=LAN.connectionError?'Party full':connected?count:'Connecting…';
+      target.querySelector('.mm-tx small').textContent=connected?`Lobby ${LAN.roomCode} · ${count}`:'Create or join a lobby';
       target.title='View your party, invite friends and choose your trainer name';
     }
     if(!open())return;
-    if(subtitle)subtitle.textContent=connected?count:LAN.connectionError?'Party full':'Connecting…';
+    if(subtitle)subtitle.textContent=connected?`Lobby ${LAN.roomCode} · ${count}`:'Create or join a lobby';
     const key=JSON.stringify([LAN.roster,LAN.myId,LAN.hostId]);
     if(key!==rosterKey){
       rosterKey=key;const list=get('.pb-party-roster');list.replaceChildren();
@@ -104,14 +109,17 @@
       }
     }
     const status=get('.pb-party-status'),run=app().run;
-    status.textContent=LAN.connectionError??(LAN.info?.patchFailures?.length?'Game compatibility update required.':connected?(run?.__lan?.sync?`Shared XP · level ${run.player.level}`:'Party connected · shared XP enabled'):'Connecting to the party…');
+    status.textContent=LAN.connectionError??(LAN.info?.patchFailures?.length?'Game compatibility update required.':connected?(run?.__lan?.sync?`Shared XP · level ${run.player.level}`:`Lobby ${LAN.roomCode} · shared XP enabled`):LAN.connecting?'Connecting to the lobby…':'Create a lobby or enter a friend’s four-digit code.');
     status.classList.toggle('error',!!LAN.connectionError||!!LAN.info?.patchFailures?.length);
     get('[data-action=retry]').hidden=!LAN.connectionError;
-    get('.pb-party-hint').textContent=LAN.isHost?'Choose a Pokémon and start Play or Survival from the main menu. Connected friends follow your run.':LAN.hostRun?'The host is playing. Return to the game to join the run.':'Choose your Pokémon, then wait for the host to start.';
-    const info=LAN.info,opening=info?.internet&&!info.publicUrl;
-    const url=info?.publicUrl||(info?.lan?.[0])||location.origin;
-    get('.pb-party-link').value=opening?'Opening the internet link…':url;
-    get('[data-action=copy]').disabled=!!opening;
+    get('.pb-party-hint').textContent=!connected?'Opening the website does not join a party. Solo play stays separate.':LAN.isHost?'Choose a Pokémon and start Play or Survival from the main menu. Connected friends follow your run.':LAN.hostRun?'The host is playing. Return to the game to join the run.':'Choose your Pokémon, then wait for the host to start.';
+    get('.pb-party-link').value=connected?LAN.roomCode:'';
+    get('[data-action=copy]').disabled=!connected;
+    const playing=!!run&&run.state!=='over';
+    get('[data-action=create]').disabled=connected||LAN.connecting||playing;
+    get('[data-action=join]').disabled=connected||LAN.connecting||playing;
+    get('.pb-party-code').disabled=connected||LAN.connecting||playing;
+    get('[data-action=leave]').hidden=!connected;
     const name=get('.pb-party-name');if(document.activeElement!==name)name.value=LAN.playerName?.()??'';
     for(const b of el.querySelectorAll('[data-graphics]')){const selected=b.dataset.graphics===LAN.perf?.mode;b.classList.toggle('on',selected);b.setAttribute('aria-pressed',String(selected))}
   }

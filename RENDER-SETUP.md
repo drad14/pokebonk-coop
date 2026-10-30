@@ -10,7 +10,7 @@ This Free blueprint is for testing. Local profiles, collections and tickets rese
 
 Render automatically supplies the public address and port. The server serves HTTP and WebSockets. Do not set --internet or start Cloudflare on Render.
 
-The free service sleeps after 15 idle minutes; opening it wakes it with roughly a minute delay. Your PC can be off. The first connected player hosts each match in their browser; leaving that browser ends that match. This is one shared eight-player party per server.
+The free service sleeps after 15 idle minutes; opening it wakes it with roughly a minute delay. Your PC can be off. The first connected player hosts each match in their browser; leaving that browser ends that match. Each four-digit lobby supports eight players. Opening the website does not automatically join a party.
 
 Original game files download from pokebonk.com. A successful health check does not prove assets remain available or gameplay works. Verify the game loads and two friends can join after deployment. The pinned old build can fail if the original site removes its assets.
 

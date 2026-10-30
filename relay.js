@@ -1,3 +1,5 @@
+import {EventEmitter} from 'node:events';
+import {randomInt} from 'node:crypto';
 // WebSocket relay. The browser on the machine running this server is the host:
 // it simulates the shared world and everyone else mirrors it.
 let nextId = 1;
@@ -14,7 +16,7 @@ function isLocal(req) {
 
 const HEARTBEAT_MS = 4000;
 
-export function attachRelay(wss) {
+function attachRoom(wss, roomCode) {
   const peers = new Map(); // id -> { ws, name, species, local, key, alive }
   let hostId = null;
   let run = null; // { cfg, stage } of the host's active run, for late joiners
@@ -25,7 +27,7 @@ export function attachRelay(wss) {
     for (const [id, p] of peers) if (id !== exceptId) sendTo(p, s);
   };
   const roster = () => ({
-    t: 'roster',
+    t: 'roster', roomCode,
     maxPlayers: MAX_PLAYERS,
     host: hostId,
     run,
@@ -77,7 +79,7 @@ export function attachRelay(wss) {
     const prevHost = hostId;
     if (hostId === null || (local && !peers.get(hostId)?.local && !run)) hostId = id;
     if (prevHost !== null && prevHost !== hostId) broadcast({ t: 'hostChanged' });
-    sendTo(peers.get(id), { t: 'welcome', id, host: hostId, run, maxPlayers: MAX_PLAYERS });
+    sendTo(peers.get(id), { t: 'welcome', roomCode, id, host: hostId, run, maxPlayers: MAX_PLAYERS });
     broadcast(roster());
 
     ws.on('message', (data, isBinary) => {
@@ -138,3 +140,29 @@ export function attachRelay(wss) {
   });
 }
 
+
+// Every relay, run and XP stream belongs to exactly one explicit lobby.
+export function attachRelay(wss) {
+  const rooms=new Map();
+  wss.on('connection',(ws,req)=>{
+    const query=new URL(req.url,'http://private').searchParams;
+    let code=query.get('room'),room;
+    if(query.get('action')==='create'){
+      if(rooms.size>=1000){ws.close(4009,'Too many lobbies; try again later');return}
+      do{code=String(randomInt(0,10000)).padStart(4,'0')}while(rooms.has(code));
+      room=new EventEmitter();room.clients=new Set();rooms.set(code,room);attachRoom(room,code);
+    }else{
+      if(!/^\d{4}$/.test(code??'')||!rooms.has(code)){ws.close(4004,'Lobby not found. Check the four-digit code.');return}
+      room=rooms.get(code);
+    }
+    room.clients.add(ws);
+    room.emit('connection',ws,req);
+    ws.on('close',()=>{
+      room.clients.delete(ws);
+      if(!room.clients.size&&rooms.get(code)===room){
+        const expiry=setTimeout(()=>{if(!room.clients.size&&rooms.get(code)===room){rooms.delete(code);room.emit('close')}},30000);expiry.unref();
+      }
+    });
+  });
+  wss.on('close',()=>{for(const room of rooms.values())room.emit('close');rooms.clear()});
+}
