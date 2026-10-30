@@ -1,0 +1,743 @@
+[
+  {
+    "id": 1,
+    "name": "Bulbasaur",
+    "family": 1,
+    "rank": "common",
+    "types": [
+      "grass",
+      "poison"
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Charmander",
+    "family": 4,
+    "rank": "common",
+    "types": [
+      "fire"
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Squirtle",
+    "family": 7,
+    "rank": "common",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Caterpie",
+    "family": 10,
+    "rank": "common",
+    "types": [
+      "bug"
+    ]
+  },
+  {
+    "id": 13,
+    "name": "Weedle",
+    "family": 13,
+    "rank": "common",
+    "types": [
+      "bug",
+      "poison"
+    ]
+  },
+  {
+    "id": 16,
+    "name": "Pidgey",
+    "family": 16,
+    "rank": "common",
+    "types": [
+      "normal",
+      "flying"
+    ]
+  },
+  {
+    "id": 19,
+    "name": "Rattata",
+    "family": 19,
+    "rank": "common",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 21,
+    "name": "Spearow",
+    "family": 21,
+    "rank": "common",
+    "types": [
+      "normal",
+      "flying"
+    ]
+  },
+  {
+    "id": 23,
+    "name": "Ekans",
+    "family": 23,
+    "rank": "uncommon",
+    "types": [
+      "poison"
+    ]
+  },
+  {
+    "id": 25,
+    "name": "Pikachu",
+    "family": 172,
+    "rank": "uncommon",
+    "types": [
+      "electric"
+    ]
+  },
+  {
+    "id": 27,
+    "name": "Sandshrew",
+    "family": 27,
+    "rank": "uncommon",
+    "types": [
+      "ground"
+    ]
+  },
+  {
+    "id": 29,
+    "name": "Nidoran♀",
+    "family": 29,
+    "rank": "common",
+    "types": [
+      "poison"
+    ]
+  },
+  {
+    "id": 32,
+    "name": "Nidoran♂",
+    "family": 32,
+    "rank": "common",
+    "types": [
+      "poison"
+    ]
+  },
+  {
+    "id": 35,
+    "name": "Clefairy",
+    "family": 173,
+    "rank": "uncommon",
+    "types": [
+      "fairy"
+    ]
+  },
+  {
+    "id": 37,
+    "name": "Vulpix",
+    "family": 37,
+    "rank": "common",
+    "types": [
+      "fire"
+    ]
+  },
+  {
+    "id": 39,
+    "name": "Jigglypuff",
+    "family": 174,
+    "rank": "common",
+    "types": [
+      "normal",
+      "fairy"
+    ]
+  },
+  {
+    "id": 41,
+    "name": "Zubat",
+    "family": 41,
+    "rank": "uncommon",
+    "types": [
+      "poison",
+      "flying"
+    ]
+  },
+  {
+    "id": 43,
+    "name": "Oddish",
+    "family": 43,
+    "rank": "common",
+    "types": [
+      "grass",
+      "poison"
+    ]
+  },
+  {
+    "id": 46,
+    "name": "Paras",
+    "family": 46,
+    "rank": "uncommon",
+    "types": [
+      "bug",
+      "grass"
+    ]
+  },
+  {
+    "id": 48,
+    "name": "Venonat",
+    "family": 48,
+    "rank": "uncommon",
+    "types": [
+      "bug",
+      "poison"
+    ]
+  },
+  {
+    "id": 50,
+    "name": "Diglett",
+    "family": 50,
+    "rank": "common",
+    "types": [
+      "ground"
+    ]
+  },
+  {
+    "id": 52,
+    "name": "Meowth",
+    "family": 52,
+    "rank": "common",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 54,
+    "name": "Psyduck",
+    "family": 54,
+    "rank": "common",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 56,
+    "name": "Mankey",
+    "family": 56,
+    "rank": "uncommon",
+    "types": [
+      "fighting"
+    ]
+  },
+  {
+    "id": 58,
+    "name": "Growlithe",
+    "family": 58,
+    "rank": "uncommon",
+    "types": [
+      "fire"
+    ]
+  },
+  {
+    "id": 60,
+    "name": "Poliwag",
+    "family": 60,
+    "rank": "uncommon",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 63,
+    "name": "Abra",
+    "family": 63,
+    "rank": "uncommon",
+    "types": [
+      "psychic"
+    ]
+  },
+  {
+    "id": 66,
+    "name": "Machop",
+    "family": 66,
+    "rank": "uncommon",
+    "types": [
+      "fighting"
+    ]
+  },
+  {
+    "id": 69,
+    "name": "Bellsprout",
+    "family": 69,
+    "rank": "common",
+    "types": [
+      "grass",
+      "poison"
+    ]
+  },
+  {
+    "id": 72,
+    "name": "Tentacool",
+    "family": 72,
+    "rank": "uncommon",
+    "types": [
+      "water",
+      "poison"
+    ]
+  },
+  {
+    "id": 74,
+    "name": "Geodude",
+    "family": 74,
+    "rank": "uncommon",
+    "types": [
+      "rock",
+      "ground"
+    ]
+  },
+  {
+    "id": 77,
+    "name": "Ponyta",
+    "family": 77,
+    "rank": "uncommon",
+    "types": [
+      "fire"
+    ]
+  },
+  {
+    "id": 79,
+    "name": "Slowpoke",
+    "family": 79,
+    "rank": "uncommon",
+    "types": [
+      "water",
+      "psychic"
+    ]
+  },
+  {
+    "id": 81,
+    "name": "Magnemite",
+    "family": 81,
+    "rank": "uncommon",
+    "types": [
+      "electric",
+      "steel"
+    ]
+  },
+  {
+    "id": 83,
+    "name": "Farfetch’d",
+    "family": 83,
+    "rank": "uncommon",
+    "types": [
+      "normal",
+      "flying"
+    ]
+  },
+  {
+    "id": 84,
+    "name": "Doduo",
+    "family": 84,
+    "rank": "uncommon",
+    "types": [
+      "normal",
+      "flying"
+    ]
+  },
+  {
+    "id": 86,
+    "name": "Seel",
+    "family": 86,
+    "rank": "uncommon",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 88,
+    "name": "Grimer",
+    "family": 88,
+    "rank": "uncommon",
+    "types": [
+      "poison"
+    ]
+  },
+  {
+    "id": 90,
+    "name": "Shellder",
+    "family": 90,
+    "rank": "uncommon",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 92,
+    "name": "Gastly",
+    "family": 92,
+    "rank": "uncommon",
+    "types": [
+      "ghost",
+      "poison"
+    ]
+  },
+  {
+    "id": 95,
+    "name": "Onix",
+    "family": 95,
+    "rank": "uncommon",
+    "types": [
+      "rock",
+      "ground"
+    ]
+  },
+  {
+    "id": 96,
+    "name": "Drowzee",
+    "family": 96,
+    "rank": "uncommon",
+    "types": [
+      "psychic"
+    ]
+  },
+  {
+    "id": 98,
+    "name": "Krabby",
+    "family": 98,
+    "rank": "uncommon",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 100,
+    "name": "Voltorb",
+    "family": 100,
+    "rank": "uncommon",
+    "types": [
+      "electric"
+    ]
+  },
+  {
+    "id": 102,
+    "name": "Exeggcute",
+    "family": 102,
+    "rank": "uncommon",
+    "types": [
+      "grass",
+      "psychic"
+    ]
+  },
+  {
+    "id": 104,
+    "name": "Cubone",
+    "family": 104,
+    "rank": "uncommon",
+    "types": [
+      "ground"
+    ]
+  },
+  {
+    "id": 106,
+    "name": "Hitmonlee",
+    "family": 236,
+    "rank": "rare",
+    "types": [
+      "fighting"
+    ]
+  },
+  {
+    "id": 107,
+    "name": "Hitmonchan",
+    "family": 236,
+    "rank": "rare",
+    "types": [
+      "fighting"
+    ]
+  },
+  {
+    "id": 108,
+    "name": "Lickitung",
+    "family": 108,
+    "rank": "rare",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 109,
+    "name": "Koffing",
+    "family": 109,
+    "rank": "uncommon",
+    "types": [
+      "poison"
+    ]
+  },
+  {
+    "id": 111,
+    "name": "Rhyhorn",
+    "family": 111,
+    "rank": "rare",
+    "types": [
+      "ground",
+      "rock"
+    ]
+  },
+  {
+    "id": 113,
+    "name": "Chansey",
+    "family": 440,
+    "rank": "rare",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 114,
+    "name": "Tangela",
+    "family": 114,
+    "rank": "rare",
+    "types": [
+      "grass"
+    ]
+  },
+  {
+    "id": 115,
+    "name": "Kangaskhan",
+    "family": 115,
+    "rank": "rare",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 116,
+    "name": "Horsea",
+    "family": 116,
+    "rank": "uncommon",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 118,
+    "name": "Goldeen",
+    "family": 118,
+    "rank": "uncommon",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 120,
+    "name": "Staryu",
+    "family": 120,
+    "rank": "uncommon",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 122,
+    "name": "Mr. Mime",
+    "family": 439,
+    "rank": "uncommon",
+    "types": [
+      "psychic",
+      "fairy"
+    ]
+  },
+  {
+    "id": 123,
+    "name": "Scyther",
+    "family": 123,
+    "rank": "uncommon",
+    "types": [
+      "bug",
+      "flying"
+    ]
+  },
+  {
+    "id": 124,
+    "name": "Jynx",
+    "family": 238,
+    "rank": "rare",
+    "types": [
+      "ice",
+      "psychic"
+    ]
+  },
+  {
+    "id": 125,
+    "name": "Electabuzz",
+    "family": 239,
+    "rank": "rare",
+    "types": [
+      "electric"
+    ]
+  },
+  {
+    "id": 126,
+    "name": "Magmar",
+    "family": 240,
+    "rank": "rare",
+    "types": [
+      "fire"
+    ]
+  },
+  {
+    "id": 127,
+    "name": "Pinsir",
+    "family": 127,
+    "rank": "rare",
+    "types": [
+      "bug"
+    ]
+  },
+  {
+    "id": 128,
+    "name": "Tauros",
+    "family": 128,
+    "rank": "rare",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 129,
+    "name": "Magikarp",
+    "family": 129,
+    "rank": "uncommon",
+    "types": [
+      "water"
+    ]
+  },
+  {
+    "id": 131,
+    "name": "Lapras",
+    "family": 131,
+    "rank": "rare",
+    "types": [
+      "water",
+      "ice"
+    ]
+  },
+  {
+    "id": 132,
+    "name": "Ditto",
+    "family": 132,
+    "rank": "rare",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 133,
+    "name": "Eevee",
+    "family": 133,
+    "rank": "rare",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 137,
+    "name": "Porygon",
+    "family": 137,
+    "rank": "rare",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 138,
+    "name": "Omanyte",
+    "family": 138,
+    "rank": "rare",
+    "types": [
+      "rock",
+      "water"
+    ]
+  },
+  {
+    "id": 140,
+    "name": "Kabuto",
+    "family": 140,
+    "rank": "rare",
+    "types": [
+      "rock",
+      "water"
+    ]
+  },
+  {
+    "id": 142,
+    "name": "Aerodactyl",
+    "family": 142,
+    "rank": "rare",
+    "types": [
+      "rock",
+      "flying"
+    ]
+  },
+  {
+    "id": 143,
+    "name": "Snorlax",
+    "family": 446,
+    "rank": "rare",
+    "types": [
+      "normal"
+    ]
+  },
+  {
+    "id": 144,
+    "name": "Articuno",
+    "family": 144,
+    "rank": "legendary",
+    "types": [
+      "ice",
+      "flying"
+    ]
+  },
+  {
+    "id": 145,
+    "name": "Zapdos",
+    "family": 145,
+    "rank": "legendary",
+    "types": [
+      "electric",
+      "flying"
+    ]
+  },
+  {
+    "id": 146,
+    "name": "Moltres",
+    "family": 146,
+    "rank": "legendary",
+    "types": [
+      "fire",
+      "flying"
+    ]
+  },
+  {
+    "id": 147,
+    "name": "Dratini",
+    "family": 147,
+    "rank": "rare",
+    "types": [
+      "dragon"
+    ]
+  },
+  {
+    "id": 150,
+    "name": "Mewtwo",
+    "family": 150,
+    "rank": "legendary",
+    "types": [
+      "psychic"
+    ]
+  },
+  {
+    "id": 151,
+    "name": "Mew",
+    "family": 151,
+    "rank": "legendary",
+    "types": [
+      "psychic"
+    ]
+  }
+]

@@ -1,0 +1,15 @@
+**
+!Dockerfile
+!package.json
+!package-lock.json
+!server.js
+!api.js
+!relay.js
+!patches.js
+!tunnel.js
+!runtime-config.js
+!gacha.js
+!catalog.json
+!private.html
+!client/
+!client/**
