@@ -41,3 +41,7 @@
 .pb-party-lobby{display:grid;gap:10px;margin-bottom:16px}.pb-party-code{width:100%;min-width:0;min-height:44px;font:inherit;font-size:20px;letter-spacing:.2em;padding:8px 12px;border:2px solid var(--edge,#ddd7ec);border-radius:12px;background:var(--paper,#fff);color:var(--ink,#302945)}.pb-party-link{font-size:24px;letter-spacing:.25em;text-align:center}
 
 .pb-party-code,.pb-party-link{box-sizing:border-box}
+
+.pb-ticket-wallet{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}.pb-ticket-balance{display:inline-flex;align-items:center;gap:4px;padding:5px 8px;border-radius:99px;background:#171c3e;color:#fff;font-size:14px;font-weight:900;white-space:nowrap}.pb-ticket-balance svg{flex:none}.mm-top .trainer{flex-wrap:wrap}
+
+.mm-top .tr-cur{flex-wrap:wrap}.mm-top .trainer{max-width:100%;box-sizing:border-box}@media(max-width:900px){.mm:not(.auth) .mm-top{flex-wrap:wrap;gap:6px}.mm-top .trainer{justify-content:center}.mm-top .tr-cur{justify-content:center}}

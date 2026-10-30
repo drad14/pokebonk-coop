@@ -1,6 +1,6 @@
 {
   "name": "pokebonk-multiplayer",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Unofficial co-op multiplayer mod for PokéBonk: play with friends on the same network or over the internet.",
   "private": true,
   "type": "module",
@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node server.js",
     "start:internet": "node server.js --internet",
-    "test": "node --test tests/features.test.mjs tests/xp.test.mjs"
+    "test": "node --test tests/features.test.mjs tests/xp.test.mjs tests/tickets.test.mjs"
   },
   "engines": {
     "node": ">=18"

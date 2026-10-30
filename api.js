@@ -1,3 +1,4 @@
+import {rollDrops,collectDrops} from './loot.js';
 // Local stand-in for api.pokebonk.com. Accounts live in ./data/accounts.json on
 // the host machine; nothing is sent to the official servers or leaderboards.
 import fs from 'node:fs';
@@ -135,6 +136,14 @@ export async function handleApi(req, res, route, url) {
   }
   if (route === '/auth/logout') return json(res, 204);
 
+  if(['/gacha/drops','/gacha/collect'].includes(route)&&m==='POST'){
+    if(!need())return;
+    const b=await body(req),before=structuredClone(acc);
+    try{
+      const result=route==='/gacha/drops'?{drops:rollDrops(acc,b.runId,b.events)}:{collected:collectDrops(acc,b.runId,b.ids),...gachaView(acc)};
+      persist();return json(res,200,result);
+    }catch(error){for(const key of Object.keys(acc))delete acc[key];Object.assign(acc,before);return json(res,error.status||500,{error:error.status?error.message:'Ticket save failed; retry safely.'})}
+  }
   if(route==='/gacha'&&m==='GET'){
     if(!need())return;
     const result=gachaView(acc);persist();return json(res,200,result);
@@ -143,7 +152,7 @@ export async function handleApi(req, res, route, url) {
     if(!need())return;
     const b=await body(req),before=structuredClone(acc);
     try{
-      const receipt=pull(acc,b.count,b.requestId);
+      const receipt=pull(acc,b.count,b.requestId,undefined,b.currency);
       persist();
       return json(res,200,{...gachaView(acc),...receipt,profile:{...acc.profile,name:acc.name}});
     }catch(error){

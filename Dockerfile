@@ -3,7 +3,7 @@ ENV NODE_ENV=production HOST=0.0.0.0 PORT=8777 PBCOOP_DATA_DIR=/app/data PBCOOP_
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
-COPY --chown=node:node server.js api.js relay.js patches.js tunnel.js runtime-config.js gacha.js catalog.json private.html ./
+COPY --chown=node:node server.js api.js relay.js patches.js tunnel.js runtime-config.js loot.js gacha.js catalog.json private.html ./
 COPY --chown=node:node client ./client
 RUN mkdir -p /app/data /app/cache && chown node:node /app/data /app/cache
 USER node

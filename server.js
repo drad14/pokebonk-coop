@@ -174,7 +174,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/' || p === '/index.html') {
       const file = await cached('index.html');
       let html = fs.readFileSync(file, 'utf8');
-      const scripts = ['net.js', 'world.js', 'combat.js', 'perf.js','xp.js','gacha.js','menu.js'].map((f) => `<script src="/lan/${f}"></script>`).join('\n');
+      const scripts = ['net.js', 'world.js', 'combat.js', 'perf.js','xp.js','tickets.js','gacha.js','menu.js'].map((f) => `<script src="/lan/${f}"></script>`).join('\n');
       html = html.replace('<head>', '<head>\n' + scripts);
       // Fresh URL for the game's entry script whenever the patches change.
       html = html.replace(/(<script type="module"[^>]*src="[^"]+\.js)"/, `$1?lan=${patchTag()}"`);

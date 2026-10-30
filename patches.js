@@ -19,6 +19,11 @@ export function patchPrivateLoader(src){
 
 const PATCHES = [
   {
+    name:'ticket pickup rendering',
+    find:'let c=Math.sin(e*4+o)*.12,l=this.y[o]+c;',
+    replace:'if(window.LAN?.tickets?.renderPickup(this,o,e))continue;let c=Math.sin(e*4+o)*.12,l=this.y[o]+c;',
+  },
+  {
     name: 'private local sign-in',
     find: 'captcha:await Sk()',
     replace: 'captcha:null',
@@ -34,7 +39,7 @@ const PATCHES = [
     // Exposes the app instance so the LAN client can reach the active run.
     name: 'expose app',
     find: /async boot\(\)\{([\w$]+)\(this\)/g,
-    replace: 'async boot(){window.__pbApp=this;window.LAN.game={catalog:()=>j.pokemon.filter(e=>dt(e.id,t=>j.root(t).id)?.id===e.id).map(e=>({id:e.id,name:e.name,family:lI.family(e.id),rank:dt(e.id,t=>j.root(t).id).rank??"common",types:e.types})),normalize:KO,portrait:uO,section:JU,icon:Q,symbol:Z,click:()=>N.click()};$1(this)',
+    replace: 'async boot(){window.__pbApp=this;window.LAN.game={ticketKinds:()=>{for(const [name,col]of [["ticket-gold",16766758],["ticket-purple",11817983]]){if(!Wg.includes(name)){const i=Wg.push(name)-1;Gg[i]={shape:I.Square,col,pillar:2}}}return {gold:Wg.indexOf("ticket-gold"),purple:Wg.indexOf("ticket-purple"),square:I.Square,soft:I.Soft}},catalog:()=>j.pokemon.filter(e=>dt(e.id,t=>j.root(t).id)?.id===e.id).map(e=>({id:e.id,name:e.name,family:lI.family(e.id),rank:dt(e.id,t=>j.root(t).id).rank??"common",types:e.types})),normalize:KO,portrait:uO,section:JU,icon:Q,symbol:Z,click:()=>N.click()};$1(this)',
   },
   {
     name: 'native home party and gacha controls',

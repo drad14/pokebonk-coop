@@ -199,6 +199,7 @@
     LAN.world?.install(run);
     LAN.combat?.install(run);
     LAN.xp?.install(run);
+    LAN.tickets?.install(run);
     LAN.menu?.installRun(run);
     if (sync) installDeath(run);
 

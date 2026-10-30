@@ -1,4 +1,4 @@
-# PokéBonk co-op 0.3.2
+# PokéBonk co-op 0.3.3
 
 For Render, see [RENDER-SETUP.md](RENDER-SETUP.md). Free hosting currently loses local saves on sleep/restart.
 
@@ -38,21 +38,20 @@ Opening the website leaves you outside a party. Create a lobby or join by its fo
 - Late joiners catch up to the host's current shared level/bar and receive the corresponding queued level-up choices. Replayed pickup/reward messages do not grant extra XP.
 - Choice menus and the existing co-op waiting behavior are unchanged by this patch. The XP state can update while someone is choosing.
 
-## Gacha
+## Gacha and ticket pickups
 
-Open **Gacha** on the main menu between runs.
+Gold and purple balances appear alongside currencies at the top of the main menu. Existing tickets become purple at a 1:1 ratio; new accounts still start with 10 purple tickets.
 
-- Start with **10 tickets**. Pull x1 costs 1; pull x10 costs 10.
-- Finished runs award **1 per full minute** (up to 20), **1 per boss** (up to 5), and **5 for victory**. Maximum 30. Zero-progress runs give zero.
-- Pulls unlock **79 playable League members**. Pick them in the normal League screen after closing gacha.
-- Odds: **60% common, 30% uncommon, 9% rare, 1% legendary**. Members within a rarity are equally likely. No pity counter.
-- Shiny: independent **1/128 per pull**, about 0.78%. Owning a Pokémon does not reduce the chance. Shiny looks unlock in the normal wardrobe and are not automatically equipped.
-- Duplicate normal Pokémon give **15 stardust**; duplicate shinies give **50**.
-- A Poké Ball winds up, opens with a rarity-colored burst, then reveals the cards in sequence. **Skip animation** shows saved results immediately. Reduced-motion / reduced-flash settings bypass the reveal sequence. No new audio added.
-- Rewards save before the animation. Skip never purchases or rerolls anything. On a failed connection use **Retry last pull**; the same request does not spend twice. The server retains 20 request receipts.
-- Keyboard: Tab / Enter; Escape skips an active reveal, then closes gacha. Inside gacha, controller D-pad/stick moves; **PlayStation Cross / Xbox A** confirms, **Circle / Xbox B** skips or closes. Open gacha with its on-screen button.
+- Choose gold or purple, then pull x1, x10 or x100. Each roll costs **10 gold OR 1 purple**; x100 costs **1000 gold OR 100 purple**. The two balances are never mixed automatically.
+- Per credited Pokémon KO: **1% gold**, **0.1% purple**, **98.9% no ticket**. Drops are personal, like native coins. They bounce, settle, glow and attract within pickup range using native pickup physics. Pick them up to receive them; clearing a floor or ending the game loses uncollected ground loot.
+- The server rolls each KO once and credits each pickup once. Network retries do not create extra tickets or reroll a drop. Gold/luck bonuses do not change ticket chances. A run tracks up to 50,000 KO events.
+- Finished-run rewards remain purple: 1 per full minute (up to 20), 1 per boss (up to 5), +5 victory, capped at 30.
+- Each roll: **50% 100 stardust, 20% 1000 stardust, 5% 2000 stardust, 25% Pokémon**. Dust-only results do not unlock a Pokémon.
+- Within Pokémon results: 60% common, 30% uncommon, 9% rare, 1% legendary, with equal chances within each rarity. Shiny chance is 1/128 per Pokémon result, or 1/512 per overall roll. No pity counter. Owning a Pokémon does not lower its odds. Duplicate Pokémon give 15 dust, or 50 for a duplicate shiny.
+- The pool contains 79 playable League members. Rewards save before the Poké Ball reveal; Skip animation does not change results. x100 reveals use a bounded stagger and a scrollable results grid.
+- Controller: D-pad/stick navigates, Cross / Xbox A confirms, Circle / Xbox B skips or closes. Reduced-motion settings bypass the animation.
 
-An open gacha screen defers automatic joining until closed. No real-money purchases.
+Validation: 14 automated gacha/loot/lobby/XP checks passed. An isolated native game verified top-bar counts, both currency costs, a purple pull and dust-only result, a guaranteed test-only ground drop, native collection and one credited ticket with no page errors. Production drop rates remain as listed above. The native check uses temporary test accounts, not your saves. Eight-human late-game performance still needs a group playtest.
 
 ## Saves and assets
 

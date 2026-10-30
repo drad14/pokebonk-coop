@@ -8,19 +8,19 @@ import {attachRelay,MAX_PLAYERS} from '../relay.js';
 test('pull spending, replay protection and permanent duplicate/shiny rewards',()=>{
   const acc={profile:{}};
   assert.equal(wallet(acc).tickets,10);
-  const receipt=pull(acc,10,'ten-pull-request',()=>.1);
+  let n=0;const receipt=pull(acc,10,'ten-pull-request',()=>[.9,.1,.5,.5][n++%4]);
   assert.equal(receipt.results.length,10);assert.equal(wallet(acc).tickets,0);
   assert.equal(wallet(acc).pulls,10);assert.equal(acc.profile.league.length,1);
   assert.equal(acc.profile.stardust,135);
   assert.deepEqual(pull(acc,10,'ten-pull-request',()=>{throw Error('Must not reroll')}),receipt);
   assert.equal(wallet(acc).pulls,10);
   assert.throws(()=>pull(acc,1,'other-pull-request'),/Not enough/);
-  assert.throws(()=>pull(acc,1000,'invalid-pull-request'),/1 or 10/);
+  assert.throws(()=>pull(acc,1000,'invalid-pull-request'),/1, 10 or 100/);
   assert.throws(()=>pull(acc,1,'ten-pull-request'),/different/);
   wallet(acc).tickets=2;
-  const shiny=pull(acc,1,'shiny-pull-request',()=>0).results[0];
+  let seq=[.9,0,0,0];const shiny=pull(acc,1,'shiny-pull-request',()=>seq.shift()).results[0];
   assert.equal(shiny.shiny,true);assert.equal(shiny.newShiny,true);
-  const again=pull(acc,1,'shiny-pull-again',()=>0).results[0];
+  seq=[.9,0,0,0];const again=pull(acc,1,'shiny-pull-again',()=>seq.shift()).results[0];
   assert.equal(again.shiny,true);assert.equal(again.duplicate,true);assert.equal(again.dust,50);
   assert.ok(acc.profile.shinies.includes(shiny.id));
 });
@@ -34,7 +34,7 @@ test('run ticket earnings are capped and no reward for zero progress',()=>{
 });
 test('all catalog rarities can be rolled and only playable catalog members are awarded',()=>{
   for(const [rank,value]of [['common',.1],['uncommon',.7],['rare',.95],['legendary',.999]]){
-    const acc={profile:{}},sequence=[value,.5,.5];
+    const acc={profile:{}},sequence=[.9,value,.5,.5];
     const result=pull(acc,1,'rarity-test-'+rank,()=>sequence.shift()).results[0];
     assert.equal(result.rank,rank);assert.ok(CATALOG.some(p=>p.id===result.id));
   }
@@ -107,3 +107,4 @@ test('explicit four-digit lobbies isolate players, runs, XP and binary snapshots
     const invalid=connect('room=abcd');assert.equal((await once(invalid.ws,'close'))[0],4004);
   }finally{for(const p of peers)p.ws.terminate();await new Promise(r=>wss.close(r));await new Promise(r=>server.close(r))}
 });
+

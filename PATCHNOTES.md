@@ -1,3 +1,13 @@
+# 0.3.3: the floor is a ticket machine
+
+- Gold and purple ticket balances moved upstairs, next to your other currencies. Financial literacy patch.
+- Defeated Pokémon can drop actual tickets. Please pick them up. Staring at them does not count.
+- 10 gold tickets or 1 purple ticket buys a roll. x1, x10 and x100 are available for either currency.
+- Rolls now give 100, 1000 or 2000 stardust most of the time, with a 25% Pokémon chance. The entire League is no longer hiding in every envelope.
+- Existing tickets become purple 1:1. Old balances are kept; nobody has been sent to ticket bankruptcy.
+- Server-owned rolls and pickup receipts stop retries from duplicating rewards. x100 animations finish before next season.
+- Exact odds and validation are in README.md and the gacha menu. Storage is unchanged: Neon persistence has not been integrated; Render Free still needs external storage for saves across restarts.
+
 # 0.3.2: wrong party, bro
 
 - Opening the website no longer signs you up for somebody else’s adventure.

@@ -35,7 +35,13 @@
     // Native factories register the official co-op button even when it is
     // hidden. Keep keyboard/controller navigation on the displayed game tiles.
     if(controls.navigation)controls.navigation.splice(0,controls.navigation.length,...controls.navigation.filter(button=>controls.screen.contains(button)));
-    refresh();
+    refreshTickets();LAN.tickets?.load();refresh();
+  }
+  function refreshTickets(){
+    const trainer=homeControls?.screen?.querySelector('.trainer');if(!trainer)return;
+    let holder=trainer.querySelector('.pb-ticket-wallet');if(!holder){holder=node('span','pb-ticket-wallet');(trainer.querySelector('.tr-cur')??trainer).append(holder)}
+    const wallet=LAN.tickets?.wallet;holder.replaceChildren();
+    for(const [type,count]of [['gold',wallet?.goldTickets],['purple',wallet?.purpleTickets??wallet?.tickets]]){const pill=node('span','pb-ticket-balance');pill.title=type==='gold'?'Gold tickets · 10 per roll':'Purple tickets · 1 per roll';pill.setAttribute('aria-label',type+' tickets: '+(count??'loading'));pill.innerHTML=LAN.tickets?.icon(type)??'';pill.append(document.createTextNode(count===undefined?'…':String(count)));holder.append(pill)}
   }
   function close(){const action=back;el=null;back=null;subtitle=null;action?.()}
   function content(){
@@ -161,7 +167,7 @@
     }else{lastButtons=[];lastDirection=0}
     requestAnimationFrame(pad);
   }
-  LAN.menu={home,show,refresh,installRun,get el(){return open()?el:null}};
+  LAN.menu={home,show,refresh,refreshTickets,installRun,get el(){return open()?el:null}};
   setInterval(()=>{if(open())refresh()},1000);
   style();requestAnimationFrame(pad);
 })();

@@ -10,13 +10,15 @@ const random=()=>crypto.randomInt(0,2**24)/2**24;
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
 
 export function wallet(acc){
-  return acc.gacha??= {tickets:10,pulls:0,recent:[],requests:[]};
+  const state=acc.gacha??= {tickets:10,pulls:0,recent:[],requests:[]};
+  state.goldTickets??=0;
+  return state;
 }
 export function gachaView(acc){
   const state=wallet(acc);
-  return {tickets:state.tickets,pulls:state.pulls,recent:state.recent.slice(-10),poolSize:CATALOG.length,
-    odds:{rarities:RARITIES,shinyDenominator:SHINY_DENOMINATOR},
-    earning:'10 starter tickets. Finished runs: 1 per full minute (up to 20), 1 per boss (up to 5), +5 for victory.'};
+  return {tickets:state.tickets,purpleTickets:state.tickets,goldTickets:state.goldTickets,pulls:state.pulls,recent:state.recent.slice(-10),poolSize:CATALOG.length,
+    odds:{rarities:RARITIES,shinyDenominator:SHINY_DENOMINATOR,pokemon:25,dust:{100:50,1000:20,2000:5}},
+    earning:'10 gold tickets or 1 purple ticket = 1 roll. KOs: 1% gold, 0.1% purple, as personal ground pickups. Finished-run rewards remain purple tickets.'};
 }
 export function awardTickets(acc,result){
   const safe=(x,max)=>Number.isFinite(x)?Math.max(0,Math.min(max,Math.floor(x))):0;
@@ -24,17 +26,25 @@ export function awardTickets(acc,result){
   wallet(acc).tickets+=amount;
   return amount;
 }
-export function pull(acc,count,requestId,rng=random){
-  if(![1,10].includes(count))throw fail('Choose 1 or 10 pulls.');
+export function pull(acc,count,requestId,rng=random,currency='purple'){
+  if(![1,10,100].includes(count))throw fail('Choose 1, 10 or 100 pulls.');
+  if(!['gold','purple'].includes(currency))throw fail('Choose gold or purple tickets.');
   if(typeof requestId!=='string'||!/^[-\w]{12,80}$/.test(requestId))throw fail('A valid pull request ID is required.');
   const state=wallet(acc),previous=state.requests.find(r=>r.requestId===requestId);
-  if(previous){if(previous.count!==count)throw fail('This request ID belongs to a different pull.');return previous;}
-  if(state.tickets<count)throw fail('Not enough tickets. Finish a run to earn more.',409);
+  if(previous){if(previous.count!==count||(previous.currency??'purple')!==currency)throw fail('This request ID belongs to a different pull.');return previous;}
+  const field=currency==='gold'?'goldTickets':'tickets',cost=count*(currency==='gold'?10:1);
+  if(state[field]<cost)throw fail('Not enough '+currency+' tickets.',409);
   const profile=acc.profile;
   for(const field of ['league','unlocked','seen','shinies'])profile[field]??=[];
   profile.captured??={};
   const results=[];
   for(let i=0;i<count;i++){
+    const outcome=rng();
+    if(outcome<.75){
+      const dust=outcome<.5?100:outcome<.7?1000:2000;
+      profile.stardust=(profile.stardust??0)+dust;profile.totalStardust=(profile.totalStardust??0)+dust;
+      results.push({kind:'dust',name:dust+' stardust',dust,rank:dust===2000?'rare':dust===1000?'uncommon':'common'});continue;
+    }
     const roll=rng()*100;let sum=0,rank='legendary';
     for(const [name,chance]of Object.entries(RARITIES)){sum+=chance;if(roll<sum){rank=name;break}}
     const choices=pools[rank],pokemon=choices[Math.floor(rng()*choices.length)];
@@ -48,11 +58,11 @@ export function pull(acc,count,requestId,rng=random){
     profile.captured[pokemon.family]??=Date.now();
     profile.stardust=(profile.stardust??0)+dust;
     profile.totalStardust=(profile.totalStardust??0)+dust;
-    results.push({id:pokemon.id,name:pokemon.name,rank,shiny,newPokemon,newShiny,duplicate,dust});
+    results.push({kind:'pokemon',id:pokemon.id,name:pokemon.name,rank,shiny,newPokemon,newShiny,duplicate,dust});
   }
-  state.tickets-=count;state.pulls+=count;
+  state[field]-=cost;state.pulls+=count;
   state.recent=[...state.recent,...results].slice(-50);
-  const receipt={requestId,count,results};
+  const receipt={requestId,count,currency,cost,results};
   state.requests=[...state.requests,receipt].slice(-20);
   return receipt;
 }
