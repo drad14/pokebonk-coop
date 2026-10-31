@@ -1,4 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {wallet,pull,gachaView} from '../gacha.js';import {rollDrops,collectDrops} from '../loot.js';
+import test from 'node:test';import assert from 'node:assert/strict';import {wallet,pull,gachaView,claimGhostTicket} from '../gacha.js';import {rollDrops,collectDrops} from '../loot.js';
 test('legacy tickets migrate to purple; both currencies buy 1/10/100 without double spending',()=>{
  const acc={profile:{},gacha:{tickets:100,pulls:0,recent:[],requests:[]}};assert.equal(wallet(acc).goldTickets,0);wallet(acc).goldTickets=1000;
  const gold=pull(acc,100,'hundred-gold-pull',()=>.1,'gold');assert.equal(gold.results.length,100);assert.equal(wallet(acc).goldTickets,0);assert.equal(wallet(acc).tickets,100);
@@ -22,3 +22,5 @@ test('server rolls each KO once and credits only collected drops once',()=>{
  assert.deepEqual(collectDrops(acc,'run1',drops.map(d=>d.id)),{gold:0,purple:0});assert.ok(rollDrops(acc,'run1',events).every(d=>d.collected));
  assert.throws(()=>rollDrops(acc,'unknown',events),/Run not found/);assert.throws(()=>collectDrops(acc,'run1',['__proto__']),/not found/);
 });
+
+test('Gastly grants one purple ticket per click receipt, including safe retries',()=>{const acc={profile:{}};assert.equal(wallet(acc).tickets,10);assert.deepEqual(claimGhostTicket(acc,'ghost-click-00001'),{awarded:1});assert.equal(wallet(acc).tickets,11);assert.deepEqual(claimGhostTicket(acc,'ghost-click-00001'),{awarded:0});assert.equal(wallet(acc).tickets,11);claimGhostTicket(acc,'ghost-click-00002');assert.equal(wallet(acc).tickets,12);assert.throws(()=>claimGhostTicket(acc,'bad'),/request ID/);assert.equal(wallet(acc).tickets,12)});

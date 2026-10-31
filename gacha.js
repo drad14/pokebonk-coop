@@ -66,3 +66,12 @@ export function pull(acc,count,requestId,rng=random,currency='purple'){
   state.requests=[...state.requests,receipt].slice(-20);
   return receipt;
 }
+
+// Hidden menu reward; request receipts make a retried click safe.
+export function claimGhostTicket(acc,requestId){
+ if(typeof requestId!=='string'||!/^[-\w]{12,80}$/.test(requestId))throw fail('A valid ticket request ID is required.');
+ const state=wallet(acc);state.ghostClaims??=[];
+ if(state.ghostClaims.includes(requestId))return {awarded:0};
+ state.tickets++;state.ghostClaims.push(requestId);state.ghostClaims=state.ghostClaims.slice(-64);
+ return {awarded:1};
+}

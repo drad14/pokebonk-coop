@@ -1,3 +1,9 @@
+# 0.4.2 — a small business run by a gas ball
+
+- Clicking an actual moving Gastly in the main menu gives one purple ticket. No extra button, no daily menu chore.
+- The balance updates immediately and saves to your private account. Retrying a failed request cannot spend its ghost receipt twice.
+- Menu buttons and panels keep their normal actions.
+
 # 0.4.1 — eight seats, now with the other four visible
 
 - Fixed the native lobby refresh loop, capacity counter and ready portraits. All eight slots now render; the ninth player still gets the door.

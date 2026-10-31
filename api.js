@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { gachaView, pull, awardTickets } from './gacha.js';
+import { gachaView, pull, awardTickets, claimGhostTicket } from './gacha.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA = process.env.PBCOOP_DATA_DIR || path.join(ROOT, 'data');
@@ -139,6 +139,12 @@ async function handleApiInner(req, res, route, url) {
   if(route==='/gacha'&&m==='GET'){
     if(!need())return;
     const fresh=!acc.gacha||acc.gacha.goldTickets===undefined;const result=gachaView(acc);if(fresh)await persist();return json(res,200,result);
+  }
+  if(route==='/gacha/ghost'&&m==='POST'){
+    if(!need())return;
+    const b=await body(req),before=structuredClone(acc);
+    try{const reward=claimGhostTicket(acc,b.requestId);await persist();return json(res,200,{...gachaView(acc),...reward});}
+    catch(error){for(const key of Object.keys(acc))delete acc[key];Object.assign(acc,before);return json(res,error.status||500,{error:error.status?error.message:'Could not save this ticket. Retry safely.'});}
   }
   if(route==='/gacha/pull'&&m==='POST'){
     if(!need())return;
