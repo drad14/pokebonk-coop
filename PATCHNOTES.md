@@ -1,3 +1,10 @@
+# 0.4.3 — the Lab remembers leg day
+
+- Fixed permanent Lab upgrades resetting after leaving the screen. Native batched purchases now save through the private profile service.
+- The same fix covers batched item purchases, archives and task/quest claims.
+- Save requests capture a profile snapshot and return the normalized saved result.
+- Updated the native mod bridge for official 0.8.86 while retaining verified older-build compatibility.
+
 # 0.4.2 — a small business run by a gas ball
 
 - Clicking an actual moving Gastly in the main menu gives one purple ticket. No extra button, no daily menu chore.
