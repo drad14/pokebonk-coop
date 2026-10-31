@@ -152,7 +152,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
   try {
-    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
+    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',modVersion:'0.4.0',revision:process.env.RENDER_GIT_COMMIT??null,storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
     if (p.startsWith('/api/')) return await handleApi(req, res, p.slice(4), url);
 
     if (p === '/lan/info') {
