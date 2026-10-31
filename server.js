@@ -1,3 +1,6 @@
+import {WebSocketServer} from 'ws';
+import {attachNativeRelay} from './native-relay.js';
+import {prepareBuild} from './build-manager.js';
 // PokéBonk LAN: serves a cached copy of pokebonk.com with multiplayer patches,
 // a local stand-in for the account API, and the WebSocket relay for co-op.
 import http from 'node:http';
@@ -5,16 +8,16 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { WebSocketServer } from 'ws';
 import { patchBundle, isGameBundle, patchPrivateLoader } from './patches.js';
-import { handleApi, flushPendingProfiles } from './api.js';
+import { nativeRelayMember,handleApi, flushPendingProfiles,closeProfiles,storageKind,storageHealthy } from './api.js';
 import { publicOrigin } from './runtime-config.js';
-import { attachRelay, MAX_PLAYERS } from './relay.js';
+const MAX_PLAYERS=8;
 import { startTunnel } from './tunnel.js';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const CACHE = process.env.PBCOOP_CACHE_DIR || path.join(ROOT, 'cache');
 const CLIENT = path.join(ROOT, 'client');
+const activeBuild=await prepareBuild({cache:CACHE,root:ROOT,validate:patchBundle});
 const ORIGIN = 'https://pokebonk.com';
 const PORT = Number(process.env.PORT || 8777);
 const HOST = process.env.HOST || '127.0.0.1';
@@ -43,7 +46,7 @@ const inflight = new Map();
 // Fetches a file from the official site once and keeps it in ./cache.
 async function cached(urlPath) {
   const rel = decodeURIComponent(urlPath).replace(/^\/+/, '') || 'index.html';
-  if(rel==='index.html')return path.join(ROOT,'private.html');
+  if(rel==='index.html')return activeBuild.indexPath;
   if (rel.includes('..')) throw Object.assign(new Error('bad path'), { status: 400 });
   const file = path.join(CACHE, rel);
   if (fs.existsSync(file) && fs.statSync(file).isFile()) return file;
@@ -149,7 +152,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
   try {
-    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',build:await currentBuild()}),TYPES['.json']);
+    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
     if (p.startsWith('/api/')) return await handleApi(req, res, p.slice(4), url);
 
     if (p === '/lan/info') {
@@ -159,6 +162,7 @@ const server = http.createServer(async (req, res) => {
         maxPlayers: MAX_PLAYERS,
         publicUrl,
         patchFailures,
+        gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,
         lan: HOST==='0.0.0.0'&&!PUBLIC_URL?lanIps().map((ip) => `http://${ip}:${PORT}`):[],
       }), TYPES['.json']);
     }
@@ -171,10 +175,10 @@ const server = http.createServer(async (req, res) => {
 
     if (p === '/version.json') return send(res, 200, JSON.stringify({ build: await currentBuild() }), TYPES['.json']);
 
-    if (p === '/' || p === '/index.html') {
+    if (p === '/' || p === '/index.html' || /^\/coop\/[A-Z2-9]{4}\/?$/.test(p)) {
       const file = await cached('index.html');
       let html = fs.readFileSync(file, 'utf8');
-      const scripts = ['net.js', 'world.js', 'combat.js', 'perf.js','xp.js','tickets.js','gacha.js','menu.js'].map((f) => `<script src="/lan/${f}"></script>`).join('\n');
+      const scripts = ['controller-fix.js','native-mods.js','native-relay.js','tickets.js','gacha.js','native-menu.js','damage-meter.js'].map((f) => `<script src="/lan/${f}"></script>`).join('\n');
       html = html.replace('<head>', '<head>\n' + scripts);
       // Fresh URL for the game's entry script whenever the patches change.
       html = html.replace(/(<script type="module"[^>]*src="[^"]+\.js)"/, `$1?lan=${patchTag()}"`);
@@ -193,26 +197,18 @@ const server = http.createServer(async (req, res) => {
       cacheable ? { 'Cache-Control': 'public, max-age=3600' } : {});
   } catch (err) {
     if (!err.status || err.status >= 500) console.error(p, err.message);
-    send(res, err.status || 500, String(err.message), 'text/plain');
+    send(res, err.status || 500,err.status?String(err.message):'The private service could not complete this request. Please retry.', 'text/plain');
   }
 });
 
-// Compression roughly halves the world snapshots, which matters over internet.
-const wss = new WebSocketServer({
-  server,
-  path: '/lan/ws',
-  verifyClient:({req})=>{try{return !req.headers.origin||new URL(req.headers.origin).host===req.headers.host}catch{return false}},
-  perMessageDeflate: { threshold: 1024, zlibDeflateOptions: { level: 1 } },
-});
-attachRelay(wss);
-
+const wss=new WebSocketServer({server,path:'/native/ws',maxPayload:1048576,verifyClient:({req})=>{try{return !req.headers.origin||new URL(req.headers.origin).host===req.headers.host}catch{return false}}});
+attachNativeRelay(wss,nativeRelayMember);
 function shutdown(){
   if(shuttingDown)return;shuttingDown=true;
-  const finish=()=>{flushPendingProfiles();process.exit(0)};
+  let finishing=false;const finish=async()=>{if(finishing)return;finishing=true;try{await flushPendingProfiles();await closeProfiles()}finally{process.exit(0)}};
   flushPendingProfiles();
-  for(const client of wss.clients)client.close(1001,'Server restarting');
-  wss.close();server.close(finish);
-  setTimeout(finish,8000).unref();
+  for(const ws of wss.clients)ws.close(1001,'Server restarting');wss.close();server.close(finish);
+  setTimeout(()=>process.exit(0),8000).unref();
 }
 process.once('SIGTERM',shutdown);process.once('SIGINT',shutdown);
 

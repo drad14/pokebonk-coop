@@ -12,13 +12,16 @@ export function lootRun(acc,id){
 export function rollDrops(acc,id,events,random=rng){
   if(!Array.isArray(events)||events.length>100)throw fail('Send at most 100 KO events');
   const run=lootRun(acc,id),drops=[];run.count??=Object.keys(run.events).length;
+  if(!run.seen){run.seen={};for(const [key,value]of Object.entries(run.events)){const [stage,index,gen]=key.split(':').map(Number),slot=stage+':'+index;run.seen[slot]=Math.max(run.seen[slot]??-1,gen);if(!value)delete run.events[key]}}
+
   for(const event of events){
     if(!event||typeof event.key!=='string'||!/^\d+:\d+:\d+$/.test(event.key)||event.key.length>60||![event.x,event.y,event.z].every(n=>Number.isFinite(n)&&Math.abs(n)<1e6))throw fail('Invalid KO event');
     if(!Object.hasOwn(run.events,event.key)){
+      const [stage,index,gen]=event.key.split(':').map(Number),slot=stage+':'+index;
+      if(gen<=(run.seen[slot]??-1))continue;run.seen[slot]=gen;
       if(run.count>=50000)throw fail('Run KO limit reached',409);
       run.count++;const n=random(),type=n<.001?'purple':n<.011?'gold':null;
-      run.events[event.key]=type?{id:event.key,type,x:event.x,y:event.y,z:event.z}:null;
-      if(type)run.drops[event.key]={type,collected:false};
+      if(type){run.events[event.key]={id:event.key,type,x:event.x,y:event.y,z:event.z};run.drops[event.key]={type,collected:false}};
     }
     if(run.events[event.key])drops.push({...run.events[event.key],collected:run.drops[event.key].collected});
   }
