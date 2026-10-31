@@ -10,6 +10,8 @@ patch('gacha menu','!o.guest&&Nt(o.name)&&e.backend.renameAccount','window.LAN.m
 patch('ticket pickup rendering','let c=Math.sin(e*4+o)*.12,l=this.y[o]+c;','if(window.LAN?.tickets?.renderPickup(this,o,e))continue;let c=Math.sin(e*4+o)*.12,l=this.y[o]+c;');
 patch('eight native slots','for(let e=0;e<4;e++){let e={el:X(`div`,{class:`cp-slot`})','for(let e=0;e<8;e++){let e={el:X(`div`,{class:`cp-slot`})');
 patch('native capacity','xC=e=>e.want&&e.want>=2&&e.want<=4?e.want:4','xC=e=>e.want&&e.want>=2&&e.want<=8?e.want:8');
+patch('co-op menu range','c(`Con amigos · 2-4`)','`With friends · 2-8`',2);
+patch('co-op menu tooltip','c(`Cooperativo: juega el modo clásico con 1-3 amigos`)','`Native co-op with up to 7 friends`');
 patch('eight-player labels','{min:2,max:4}','{min:2,max:8}',2);
 patch('eight-player name','TR={2:()=>c(`Dúo`),3:()=>c(`Trío`),4:()=>c(`Escuadra`)}','TR={2:()=>c(`Dúo`),3:()=>c(`Trío`),4:()=>c(`Escuadra`),8:()=>`8 players`}');
 patch('eight-player filters','[2,3,4].map','[2,3,4,8].map',2);
