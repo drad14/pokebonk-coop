@@ -13,7 +13,7 @@
     return pads;
   };
   let currency='purple';
-  let dialog,state,busy=false,changed=false,pending=null,previousFocus=null,finishReveal=null;
+  let dialog,state,busy=false,changed=false,pending=null,previousFocus=null,finishReveal=null,visibleResults=[];
   const app=()=>window.__pbApp;
   const key=()=>`pbgacha.pending.${app().meta.account.id}`;
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -30,39 +30,42 @@
     for(const b of dialog.querySelectorAll('[data-pulls]'))b.disabled=busy||!!pending||!state||(currency==='gold'?state.goldTickets:state.purpleTickets??state.tickets)<Number(b.dataset.pulls)*(currency==='gold'?10:1);
     for(const b of dialog.querySelectorAll('[data-currency]')){b.disabled=busy||!!pending;b.setAttribute('aria-pressed',String(b.dataset.currency===currency))}
     get('#pb-gacha-retry').hidden=!pending;get('#pb-gacha-retry').disabled=busy;
-    get('#pb-gacha-close').disabled=busy;
+    get('#pb-gacha-close').disabled=busy&&!finishReveal;
+  }
+  function rewardArt(result,size=72){
+    const art=result.kind==='dust'?LAN.game.symbol('stardust',size):LAN.game.portrait(result.id,result.shiny?'shiny':null);
+    art.alt=result.name+(result.shiny?' (shiny)':'');return art;
   }
   function reveal(results){
     const region=get('#pb-gacha-reveal'),cards=get('#pb-gacha-results');
-    if(matchMedia('(prefers-reduced-motion: reduce)').matches||app().meta.profile.settings?.reduceFlashes)return Promise.resolve();
+    if(!results.length||matchMedia('(prefers-reduced-motion: reduce)').matches||app().meta.profile.settings?.reduceFlashes)return Promise.resolve();
     return new Promise(resolve=>{
-      let timer,animations=[],done=false;
-      const finish=()=>{
-        if(done)return;done=true;clearTimeout(timer);
-        for(const animation of animations)animation.cancel();
-        region.hidden=true;region.classList.remove('pb-opening');cards.classList.remove('pb-concealed');cards.removeAttribute('aria-hidden');
-        finishReveal=null;get('#pb-gacha-close').focus();resolve();
-      };
-      finishReveal=finish;
-      const shiny=results.some(r=>r.shiny),legendary=results.some(r=>r.rank==='legendary'),rare=results.some(r=>r.rank==='rare');
-      region.dataset.tier=shiny?'shiny':legendary?'legendary':rare?'rare':'common';
-      get('#pb-gacha-reveal-label').textContent=results.length===1?'One new possibility.':results.length+' chances. One very busy Poké Ball.';
-      region.hidden=false;region.classList.remove('pb-opening');cards.classList.add('pb-concealed');cards.setAttribute('aria-hidden','true');
-      get('#pb-gacha-skip').focus();region.scrollIntoView({block:'nearest',behavior:'instant'});
-      timer=setTimeout(()=>{
-        region.classList.add('pb-opening');
+      let timer,animation,done=false,index=0;
+      const finish=()=>{if(done)return;done=true;clearTimeout(timer);animation?.cancel();region.hidden=true;cards.classList.remove('pb-concealed');cards.removeAttribute('aria-hidden');finishReveal=null;controls();resolve()};
+      finishReveal=finish;region.hidden=false;cards.classList.add('pb-concealed');cards.setAttribute('aria-hidden','true');get('#pb-gacha-skip').focus();controls();
+      const step=()=>{
+        if(done)return;
+        const result=results[index],tier=result.shiny?'shiny':result.rank;
+        region.dataset.tier='common';region.classList.remove('pb-landed');
+        get('#pb-gacha-progress').textContent='REVEAL '+(index+1)+' / '+results.length;
+        get('#pb-gacha-reveal-label').textContent='Rolling…';
+        get('#pb-gacha-reveal-rank').textContent='';
+        const viewport=get('#pb-gacha-reel'),track=document.createElement('div');track.className='pb-reel-track';
+        for(let i=0;i<9;i++){const slot=document.createElement('div');slot.className='pb-reel-slot';const sample=i===4?result:results[(index+i+1)%results.length];slot.append(i===4||results.length>1?rewardArt(sample,80):LAN.game.icon('poke-ball'));track.append(slot)}
+        viewport.replaceChildren(track);
+        const unit=112,duration=results.length>=100?210:results.length>1?650:1100;
+        animation=track.animate([{transform:'translateX(0px)'},{transform:'translateX('+(-4*unit)+'px)'}],{duration,easing:'cubic-bezier(.12,.75,.18,1)',fill:'forwards'});
         timer=setTimeout(()=>{
-          region.hidden=true;cards.classList.remove('pb-concealed');cards.removeAttribute('aria-hidden');
-          animations=Array.from(cards.children,(card,i)=>card.animate([
-            {opacity:0,transform:'perspective(500px) rotateY(-75deg) translateY(15px) scale(.92)'},
-            {opacity:1,transform:'perspective(500px) rotateY(0) translateY(0) scale(1)'},
-          ],{duration:380,delay:i*Math.min(65,1500/results.length),easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'}));
-          timer=setTimeout(finish,400+Math.min(1500,results.length*65));
-        },320);
-      },1150);
+          if(done)return;region.dataset.tier=tier;region.classList.add('pb-landed');
+          get('#pb-gacha-reveal-label').textContent=result.name;
+          get('#pb-gacha-reveal-rank').textContent=(result.shiny?'SHINY · ':'')+result.rank.toUpperCase()+(result.newPokemon||result.newShiny?' · NEW!':result.duplicate?' · OWNED':'');
+          timer=setTimeout(()=>{animation?.cancel();if(++index<results.length)step();else finish()},results.length>=100?160:results.length>1?600:1100);
+        },duration);
+      };step();
     });
   }
-  function paint(results=state?.recent??[]){
+  function paint(results=visibleResults){
+    visibleResults=results;
     get('#pb-gacha-tickets').textContent=state?`${state.goldTickets} gold · ${state.purpleTickets??state.tickets} purple`:'Loading tickets…';
     get('#pb-gacha-count').textContent=state?`${state.pulls} total pulls · ${state.poolSize} playable Pokémon`:'';
     const container=get('#pb-gacha-results');container.replaceChildren();
@@ -71,9 +74,7 @@
       const card=document.createElement('article');card.className='pb-result'+(result.shiny?' shiny':'');card.dataset.rank=result.rank;
       const label=result.kind==='dust'?'STARDUST':result.newShiny?'NEW SHINY':result.newPokemon?'NEW':result.shiny?'SHINY':'OWNED';
       card.innerHTML=`<span class="pb-badge">${label}</span><strong>${esc(result.name)}</strong><small>${esc(result.rank)}${result.duplicate||result.kind==='dust'?` · +${result.dust} dust`:''}</small>`;
-      const portrait=result.kind==='dust'?document.createElement('span'):LAN.game.portrait(result.id,result.shiny?'shiny':null);
-      if(result.kind==='dust'){portrait.className='pb-dust-icon';portrait.textContent='✦';portrait.setAttribute('aria-label','Stardust')}
-      portrait.alt=result.name+(result.shiny?' (shiny)':'');card.insertBefore(portrait,card.querySelector('strong'));container.append(card);
+      const portrait=rewardArt(result);card.insertBefore(portrait,card.querySelector('strong'));container.append(card);
     }
     if(state){
       get('#pb-gacha-odds').innerHTML='<span>Pokémon <b>'+state.odds.pokemon+'%</b></span>'+Object.entries(state.odds.dust).map(([amount,chance])=>'<span>'+amount+' dust <b>'+chance+'%</b></span>').join('')+Object.entries(state.odds.rarities).map(([rank,n])=>`<span>${esc(rank[0].toUpperCase()+rank.slice(1))} <b>${n}%</b></span>`).join('');
@@ -93,26 +94,26 @@
       <div class="pb-body"><div class="pb-wallet"><strong id="pb-gacha-tickets">Loading tickets…</strong><span class="pb-count" id="pb-gacha-count"></span></div>
       <div class="pb-currencies"><button data-currency="gold">Gold tickets · 10 per roll</button><button data-currency="purple">Purple tickets · 1 per roll</button></div><div class="pb-pulls"><button data-pulls="1">Pull ×1<small>1 ticket</small></button><button data-pulls="10">Pull ×10<small>10 tickets</small></button><button data-pulls="100">Pull ×100<small>100 tickets</small></button></div>
       <p id="pb-gacha-message" role="status" aria-live="polite"></p><button id="pb-gacha-retry" hidden>Retry last pull</button>
-      <section id="pb-gacha-reveal" aria-label="Opening Poké Ball" hidden><div class="pb-ball-scene" aria-hidden="true"><div class="pb-ball-rays"></div><div class="pb-ball-orbit"></div><div class="pb-ball"><div class="pb-ball-top"></div><div class="pb-ball-bottom"></div><div class="pb-ball-seam"></div><div class="pb-ball-button"></div></div><div class="pb-ball-shadow"></div><div class="pb-ball-sparkles">${Array.from({length:12},(_,i)=>`<i style="--spark:${i}"></i>`).join('')}</div></div><strong id="pb-gacha-reveal-label"></strong><button id="pb-gacha-skip">Skip animation</button></section>
+      <section id="pb-gacha-reveal" aria-label="Individual reward reveals" hidden><small id="pb-gacha-progress"></small><div class="pb-reel-window"><div id="pb-gacha-reel"></div><i class="pb-reel-marker"></i></div><strong id="pb-gacha-reveal-label"></strong><span id="pb-gacha-reveal-rank"></span><button id="pb-gacha-skip">Reveal all</button></section>
       <div class="pb-empty" id="pb-gacha-empty">Your next teammate is in here.<br>Pulls unlock Pokémon in your League.</div><div id="pb-gacha-results" class="pb-results" aria-label="Pull results"></div>
       <details><summary>Odds, tickets & duplicates</summary><div class="pb-odds" id="pb-gacha-odds"></div><p id="pb-gacha-shiny"></p><p id="pb-gacha-earning"></p><p>Every Pokémon within a rarity has an equal chance. Duplicates give 15 stardust, or 50 for a duplicate shiny. New shinies stay unlocked.</p></details>
       <footer>Private collection only. Controller: D-pad to move · Cross / A to choose · Circle / B to close.</footer></div>`;
     document.body.append(dialog);
     dialog.addEventListener('focusin',()=>{for(const target of dialog.querySelectorAll('.pb-pad-focus'))target.classList.remove('pb-pad-focus')});
-    get('#pb-gacha-close').onclick=()=>dialog.close();
+    get('#pb-gacha-close').onclick=()=>{if(finishReveal)finishReveal();dialog.close()};
     get('#pb-gacha-skip').onclick=()=>finishReveal?.();
     dialog.addEventListener('cancel',e=>{if(busy)e.preventDefault()});
-    dialog.addEventListener('close',()=>{if(changed&&(!app().run||app().run.state==='over')){changed=false;app().toMenu()}previousFocus?.focus?.();LAN.ui.refresh()});
+    dialog.addEventListener('close',()=>{finishReveal?.();visibleResults=[];get('#pb-gacha-results').replaceChildren();get('#pb-gacha-reveal').hidden=true;get('details').open=false;if(changed&&(!app().run||app().run.state==='over')){changed=false;app().toMenu()}previousFocus?.focus?.();LAN.ui.refresh()});
     for(const b of dialog.querySelectorAll('[data-pulls]'))b.onclick=()=>doPull(Number(b.dataset.pulls));
     for(const b of dialog.querySelectorAll('[data-currency]'))b.onclick=()=>{currency=b.dataset.currency;paint()};
     get('#pb-gacha-retry').onclick=()=>doPull(pending.count,true);
   }
   async function open(){
     if(!app()?.meta?.account||app().starting||(app().run&&app().run.state!=='over'))return;
-    ensure();if(dialog.open)return;previousFocus=document.activeElement;dialog.showModal();state=null;pending=null;
+    ensure();if(dialog.open)return;previousFocus=document.activeElement;dialog.showModal();state=null;pending=null;visibleResults=[];currency='purple';dialog.scrollTop=0;
     try{pending=JSON.parse(sessionStorage.getItem(key())||'null')}catch{}
     paint([]);message('Loading your collection…');
-    try{state=await api('/gacha');paint();message(pending?'A previous pull needs confirmation. Retry it without spending twice.':'Choose a pull. Rewards save automatically.');}
+    try{state=await api('/gacha');paint([]);message(pending?'A previous pull needs confirmation. Retry it without spending twice.':'Choose a pull. Rewards save automatically.');}
     catch(e){message(e.message,true)}
   }
   async function doPull(count,retry=false){
@@ -126,7 +127,7 @@
       const result=await api('/gacha/pull','POST',pending);
       app().meta.adopt(LAN.game.normalize(result.profile));
       pending=null;sessionStorage.removeItem(key());state=result;changed=true;paint(result.results);
-      message('Rewards saved. Opening your Poké Ball…');
+      message('Rewards saved. Revealing each reward…');
       await reveal(result.results);
       const fresh=result.results.filter(r=>r.newPokemon||r.newShiny).length;
       message(`${result.count} ${result.count===1?'pull':'pulls'} saved · ${fresh} new ${fresh===1?'unlock':'unlocks'}.`);

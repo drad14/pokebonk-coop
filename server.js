@@ -4,6 +4,7 @@ import {prepareBuild} from './build-manager.js';
 // PokéBonk LAN: serves a cached copy of pokebonk.com with multiplayer patches,
 // a local stand-in for the account API, and the WebSocket relay for co-op.
 import http from 'node:http';
+import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -45,14 +46,18 @@ const inflight = new Map();
 
 // Fetches a file from the official site once and keeps it in ./cache.
 async function cached(urlPath) {
-  const rel = decodeURIComponent(urlPath).replace(/^\/+/, '') || 'index.html';
+  const upstream = new URL(urlPath, ORIGIN);
+  const rel = decodeURIComponent(upstream.pathname).replace(/^\/+/, '') || 'index.html';
   if(rel==='index.html')return activeBuild.indexPath;
   if (rel.includes('..')) throw Object.assign(new Error('bad path'), { status: 400 });
-  const file = path.join(CACHE, rel);
+  // Unhashed data, models and sprite sheets must belong to the active build.
+  const versioned = !/\.(?:js|css)$/.test(rel);
+  const assetKey = createHash('sha256').update(upstream.searchParams.get('v')??'').digest('hex').slice(0,16);
+  const file = path.join(CACHE,...(versioned?['build-assets',activeBuild.build,assetKey]:[]),rel);
   if (fs.existsSync(file) && fs.statSync(file).isFile()) return file;
   if (inflight.has(file)) return inflight.get(file);
   const job = (async () => {
-    const res = await fetch(ORIGIN + '/' + rel.split('/').map(encodeURIComponent).join('/'), {
+    const res = await fetch(ORIGIN + '/' + rel.split('/').map(encodeURIComponent).join('/')+(upstream.searchParams.has('v')?'?'+new URLSearchParams({v:upstream.searchParams.get('v')}):''), {
       headers: { 'User-Agent': 'Mozilla/5.0 pokebonk-lan' },
     });
     if (!res.ok) throw Object.assign(new Error(`upstream ${res.status}`), { status: res.status });
@@ -104,9 +109,8 @@ function serveJs(file) {
   // The small loader that imports the game bundle: point it at a URL that
   // changes with the patches, so browsers never reuse a stale unpatched copy.
   if (info.loader === undefined) {
-    const game = findGameBundle(path.dirname(file));
     const src = patchPrivateLoader(fs.readFileSync(file, 'utf8'));
-    info.loader = game && src.includes('./' + game) ? src.split('./' + game).join(`./${game}?lan=${patchTag()}`) : src;
+    info.loader = src.replace(/\.\/main-[\w-]+\.js/g, file => file+'?lan='+patchTag());
   }
   return info.loader;
 }
@@ -152,7 +156,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
   try {
-    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',modVersion:'0.4.0',revision:process.env.RENDER_GIT_COMMIT??null,storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
+    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',modVersion:'0.4.1',revision:process.env.RENDER_GIT_COMMIT??null,storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
     if (p.startsWith('/api/')) return await handleApi(req, res, p.slice(4), url);
 
     if (p === '/lan/info') {
@@ -185,7 +189,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, html, TYPES['.html']);
     }
 
-    const file = await cached(p);
+    const file = await cached(p+url.search);
     const ext = path.extname(file);
     if (ext === '.js') {
       const code = serveJs(file);

@@ -1,6 +1,6 @@
 {
   "name": "pokebonk-multiplayer",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Private PokéBonk with the current native co-op lobby, eight-player capacity and gacha mods",
   "private": true,
   "type": "module",

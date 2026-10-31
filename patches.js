@@ -1,4 +1,4 @@
-// Explicit, fail-closed modifications for official PokéBonk 0.8.83 / mvv70wso.
+// Explicit, fail-closed modifications for official PokéBonk 0.8.84 / mvw6ep5y.
 export const isGameBundle=src=>src.includes('async boot()')&&src.includes('https://api.pokebonk.com');
 export function patchPrivateLoader(src){const anchor='if(!y(location.hostname))b();else return';if(!src.includes('pokebonk:modules-ready'))return src;if(src.split(anchor).length!==2)throw Error('Unsupported loader');return src.replace(anchor,'if(!y(location.hostname)&&!window.LAN?.privateHost)b();else return')}
 export function patchBundle(src){let code=src;const failed=[];
@@ -8,7 +8,12 @@ patch('private login','captcha:await Ck()','captcha:null',3);
 patch('native mod bridge','async boot(){vR(this);','async boot(){window.__pbApp=this;window.LAN.game={normalize:qO,portrait:dO,icon:Q,symbol:Z,click:()=>N.click(),nativeLobby:()=>iz(this),nativeJoin:code=>az(this,code,error=>this.notice(error.message)),nativeRoom:KL,ticketKinds:()=>{for(const [name,col]of [["ticket-gold",16766758],["ticket-purple",11817983]]){if(!Gg.includes(name)){const i=Gg.push(name)-1;Kg[i]={shape:I.Square,col,pillar:2}}}return {gold:Gg.indexOf("ticket-gold"),purple:Gg.indexOf("ticket-purple"),square:I.Square,soft:I.Soft}}};window.LAN.init(this);vR(this);');
 patch('gacha menu','!o.guest&&Nt(o.name)&&e.backend.renameAccount','window.LAN.menu.home(e,{screen:pe,gacha:te.children[3],navigation:l});!o.guest&&Nt(o.name)&&e.backend.renameAccount');
 patch('ticket pickup rendering','let c=Math.sin(e*4+o)*.12,l=this.y[o]+c;','if(window.LAN?.tickets?.renderPickup(this,o,e))continue;let c=Math.sin(e*4+o)*.12,l=this.y[o]+c;');
+patch('dispose menu placeholder','dispose(){this.title.dispose(),this.terrain?.dispose(),this.sprites.clear(),this.r.scene.remove(this.sprites.shadows.mesh)}','dispose(){this.title.dispose(),this.terrain?.dispose(),this.sprites.clear(),this.sprites.standIn.dispose(),this.r.scene.remove(this.sprites.shadows.mesh)}');
 patch('eight native slots','for(let e=0;e<4;e++){let e={el:X(`div`,{class:`cp-slot`})','for(let e=0;e<8;e++){let e={el:X(`div`,{class:`cp-slot`})');
+patch('eight rendered native slots','for(let e=0;e<4;e++)x(_[e],n.members[e],e)','for(let e=0;e<8;e++)x(_[e],n.members[e],e)');
+patch('native room counter','${s}/4','${s}/${xC(n)}',2);
+patch('eight readiness portraits','Array.from({length:p?de:4}','Array.from({length:p?de:8}');
+patch('eight open seat choices','[2,3,4].filter(e=>e>r)','[2,3,4,8].filter(e=>e>r)');
 patch('native capacity','xC=e=>e.want&&e.want>=2&&e.want<=4?e.want:4','xC=e=>e.want&&e.want>=2&&e.want<=8?e.want:8');
 patch('co-op menu range','c(`Con amigos · 2-4`)','`With friends · 2-8`',2);
 patch('co-op menu tooltip','c(`Cooperativo: juega el modo clásico con 1-3 amigos`)','`Native co-op with up to 7 friends`');

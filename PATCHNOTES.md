@@ -1,3 +1,15 @@
+# 0.4.1 — eight seats, now with the other four visible
+
+- Fixed the native lobby refresh loop, capacity counter and ready portraits. All eight slots now render; the ninth player still gets the door.
+- Eight-player teammate search is selectable, with eight selected by default in a new private lobby. Smaller searches show their actual capacity.
+- Gacha now uses the game's own panels, colours and Stardust icon. Rewards roll and reveal individually, with rarity colours and a Reveal all button.
+- Closing and reopening Gacha clears the previous results and resets its controls. Saved rewards stay saved.
+- Fixed menu scenery surviving into Viridian Forest after a gacha pull. The Halloween welcoming committee is no longer invited into your run.
+- Menu refreshes dispose the previous scene and its placeholder sprite. Repeated pulls no longer collect spare castles.
+- Unhashed sprites, map models and data now cache separately for each official build and asset revision, preventing mixed-version visuals.
+- Fixed loader cache busting when multiple official game builds exist in the server cache.
+- Validated against official PokéBonk 0.8.84 / mvw6ep5y. Gacha odds are unchanged.
+
 # 0.4.0 — co-op has entered the co-op game
 
 - Rebuilt around official PokéBonk 0.8.83 and its real co-op. The old sidecar multiplayer has retired.
