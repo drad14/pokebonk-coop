@@ -1,3 +1,4 @@
+import {privateRankings,recordPrivateRun,RANK_TITLE} from './rankings.js';
 import {createProfileStore} from './profile-store.js';
 import {createCoopService} from './native-coop.js';
 const nativeCoop=createCoopService();
@@ -128,6 +129,7 @@ async function handleApiInner(req, res, route, url) {
   }
   if (route === '/auth/logout') return json(res, 204);
 
+  if(route==='/private/rankings'&&m==='GET'){if(!need())return;return json(res,200,{...privateRankings(Object.values(db.accounts)),me:acc.id});}
   if(['/gacha/drops','/gacha/collect'].includes(route)&&m==='POST'){
     if(!need())return;
     const b=await body(req),before=structuredClone(acc);
@@ -143,7 +145,7 @@ async function handleApiInner(req, res, route, url) {
   if(route==='/gacha/ghost'&&m==='POST'){
     if(!need())return;
     const b=await body(req),before=structuredClone(acc);
-    try{const reward=claimGhostTicket(acc,b.requestId);await persist();return json(res,200,{...gachaView(acc),...reward});}
+    try{const reward=claimGhostTicket(acc,b.requestId,b.source);await persist();return json(res,200,{...gachaView(acc),...reward});}
     catch(error){for(const key of Object.keys(acc))delete acc[key];Object.assign(acc,before);return json(res,error.status||500,{error:error.status?error.message:'Could not save this ticket. Retry safely.'});}
   }
   if(route==='/gacha/pull'&&m==='POST'){
@@ -217,7 +219,10 @@ async function handleApiInner(req, res, route, url) {
       ranked: false,
       score: Math.round((result.kills ?? 0) * 10 + (result.bosses ?? 0) * 500 + (result.victory ? 2000 : 0)),
     };
-    const receipt={record,stardust,tickets,ranked:false};
+    const privateRanked=recordPrivateRun(acc,record);
+    const reason=privateRanked?'Saved to '+RANK_TITLE+'. Survival time and damage count toward your private rankings.':'Finish a run to set a private record.';
+    Object.assign(record,{privateRanked,reason});
+    const receipt={record,stardust,tickets,ranked:false,privateRanked,reason};
     acc.runReceipts??={};acc.runReceipts[id]=receipt;
     const keys=Object.keys(acc.runReceipts);if(keys.length>100)delete acc.runReceipts[keys[0]];
     delete acc.activeRuns[id];await persist();

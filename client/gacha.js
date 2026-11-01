@@ -7,12 +7,12 @@
     const pads=rawPads();
     if(dialog?.open){suppressPad=true;return []}
     if(suppressPad){
-      if(Array.from(pads).some(p=>p?.buttons.some(b=>b.pressed)))return [];
+      if(Array.from(pads).some(p=>p&&(p.buttons.some(b=>b.pressed)||p.axes.slice(0,2).some(x=>Math.abs(x)>.25))))return [];
       suppressPad=false;
     }
     return pads;
   };
-  let currency='purple';
+  let currency='purple',padReady=false;
   let dialog,state,busy=false,changed=false,pending=null,previousFocus=null,finishReveal=null,visibleResults=[];
   const app=()=>window.__pbApp;
   const key=()=>`pbgacha.pending.${app().meta.account.id}`;
@@ -110,10 +110,10 @@
   }
   async function open(){
     if(!app()?.meta?.account||app().starting||(app().run&&app().run.state!=='over'))return;
-    ensure();if(dialog.open)return;previousFocus=document.activeElement;dialog.showModal();state=null;pending=null;visibleResults=[];currency='purple';dialog.scrollTop=0;
+    ensure();if(dialog.open)return;previousFocus=document.activeElement;padReady=false;lastPad=[];lastDirection=0;dialog.showModal();state=null;pending=null;visibleResults=[];currency='purple';dialog.scrollTop=0;
     try{pending=JSON.parse(sessionStorage.getItem(key())||'null')}catch{}
     paint([]);message('Loading your collection…');
-    try{state=await api('/gacha');paint([]);message(pending?'A previous pull needs confirmation. Retry it without spending twice.':'Choose a pull. Rewards save automatically.');}
+    try{state=await api('/gacha');paint([]);get(pending?'#pb-gacha-retry':get('[data-pulls="1"]').disabled?'[data-currency="purple"]':'[data-pulls="1"]').focus();message(pending?'A previous pull needs confirmation. Retry it without spending twice.':'Choose a pull. Rewards save automatically.');}
     catch(e){message(e.message,true)}
   }
   async function doPull(count,retry=false){
@@ -149,6 +149,7 @@
       const gamepad=Array.from(rawPads?.()??[]).find(Boolean);
       if(gamepad){
         const buttons=gamepad.buttons.map(b=>b.pressed),axis=gamepad.axes;
+        if(!padReady){lastPad=buttons;lastDirection=0;if(!buttons.some(Boolean)&&axis.slice(0,2).every(x=>Math.abs(x)<.25))padReady=true;requestAnimationFrame(pad);return}
         const direction=buttons[13]||buttons[15]||axis[0]>.6||axis[1]>.6?1:buttons[12]||buttons[14]||axis[0]<-.6||axis[1]<-.6?-1:0;
         const targets=finishReveal?[get('#pb-gacha-skip')]:Array.from(dialog.querySelectorAll('button:not(:disabled),summary')).filter(e=>e.getClientRects().length>0);
         let index=targets.indexOf(document.activeElement);

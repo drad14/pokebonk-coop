@@ -1,3 +1,4 @@
+import {teamXp} from './team-xp.js';
 import crypto from 'node:crypto';
 export const access={show:true,play:true,mode:'open',private:true,maxPlayers:8};
 export function createCoopService(){
@@ -27,6 +28,7 @@ export function createCoopService(){
     const want=[2,3,4,8].includes(b.size)?b.size:8;let room=[...rooms.values()].find(r=>r.pub===1&&r.state==='lobby'&&r.want===want&&r.members.length<want&&(!b.biome||r.biome===b.biome));
     if(room)add(room,acc,b);else{room={code:code(),host:acc.id,state:'lobby',version:1,pub:1,want,biome:b.biome||'forest',tier:b.mode==='survival'?3:Math.max(0,Math.min(2,Number(b.tier)||0)),party:null,members:[member(acc,b,0)],signals:[],chat:[],seq:0};rooms.set(room.code,room)}return {...response(room,acc),moved:true,seeking:0};
   }
+  if(route==='/coop/xp'&&method==='POST')return teamXp(parties.get(b.party),acc.id,b);
   if(route==='/coop/team'){const p=parties.get(url.searchParams.get('party'));return {live:!!p,entries:[],members:p?.members??[]}}
   const match=/^\/coop\/rooms\/([^/]+)(?:\/(\w+))?$/.exec(route);
   if(!match)throw error('Private co-op endpoint unavailable',404);

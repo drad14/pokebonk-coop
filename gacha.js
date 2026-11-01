@@ -68,10 +68,12 @@ export function pull(acc,count,requestId,rng=random,currency='purple'){
 }
 
 // Hidden menu reward; request receipts make a retried click safe.
-export function claimGhostTicket(acc,requestId){
+export function claimGhostTicket(acc,requestId,source='ghost'){
+ if(!['ghost','feedback'].includes(source))throw fail('Unknown ticket reward.');
+ const amount=source==='feedback'?100:1;
  if(typeof requestId!=='string'||!/^[-\w]{12,80}$/.test(requestId))throw fail('A valid ticket request ID is required.');
  const state=wallet(acc);state.ghostClaims??=[];
  if(state.ghostClaims.includes(requestId))return {awarded:0};
- state.tickets++;state.ghostClaims.push(requestId);state.ghostClaims=state.ghostClaims.slice(-64);
- return {awarded:1};
+ state.tickets+=amount;state.ghostClaims.push(requestId);state.ghostClaims=state.ghostClaims.slice(-64);
+ return {awarded:amount};
 }

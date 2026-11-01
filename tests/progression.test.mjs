@@ -1,0 +1,17 @@
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import vm from'node:vm';import{teamXp}from'../team-xp.js';import{privateRankings,recordPrivateRun}from'../rankings.js';
+test('private rankings retain each player best time and damage independently, including guests and old receipts',()=>{
+ const a={id:'a',name:'A',guest:true,runReceipts:{old:{record:{id:'old',time:30,damage:900}}}},b={id:'b',name:'B'};
+ recordPrivateRun(a,{id:'new',time:100,damage:100,species:4});recordPrivateRun(b,{time:80,damage:800,species:1});recordPrivateRun(a,{time:0,damage:100000});
+ const board=privateRankings([a,b]);assert.equal(board.survival[0].playerId,'a');assert.equal(board.damage[0].playerId,'a');assert.equal(board.damage[0].damage,900);assert.equal(board.survival[0].time,100);assert.equal(board.damage.length,2);
+});
+test('team XP is membership scoped, monotonic and scales to eight players',()=>{
+ const party={members:['a','b']};assert.equal(teamXp(party,'a',{earned:50,startLevel:1}).scale,1.7);assert.equal(teamXp(party,'b',{earned:70,startLevel:1}).total,120);assert.equal(teamXp(party,'a',{earned:20,startLevel:1}).total,120);assert.equal(teamXp(party,'b',{earned:70,startLevel:1}).total,120);assert.throws(()=>teamXp(party,'stranger',{earned:1,startLevel:1}),/not part/);assert.throws(()=>teamXp(party,'a',{earned:NaN,startLevel:1}),/Invalid/);assert.ok(Math.abs(teamXp({members:['a',1,2,3,4,5,6,7]},'a',{earned:0,startLevel:1}).scale-5.9)<1e-9);
+});
+test('two native clients share the exact XP bar despite different XP bonuses, distance, downed status, retries and rare candies',async()=>{
+ const party={members:['a','b']};let fail=false;
+ function client(id,gain){const player={level:1,xp:0,xpNext:100,stats:{xpGain:gain},pos:{x:id==='a'?0:10000},threshold:n=>100*n,levelUp(){this.level++;this.xpNext=this.threshold(this.level);run.pendingLevels++}},run={state:'play',player,diff:{xpMult:1},pendingLevels:0,coop:{party:'test',size:2},ui:{toast(){}}},app={run,meta:{account:{token:id}},hud:{}};const LAN={game:{xpMethods:{curve:'threshold',level:'levelUp'}}};const context=vm.createContext({window:{LAN,__pbApp:app},setInterval(){return 1},clearInterval(){},AbortSignal,fetch:async(_,options)=>{if(fail){fail=false;throw Error('Test outage')}const value=teamXp(party,id,JSON.parse(options.body));return{ok:true,json:async()=>value}}});vm.runInContext(fs.readFileSync(new URL('../client/team-xp.js',import.meta.url),'utf8'),context);LAN.teamXp.install(run);return run}
+ const a=client('a',1),b=client('b',2);await new Promise(setImmediate);a.player.addXp(100);b.player.addXp(50);await a.__teamXP.flush();await b.__teamXP.flush();await a.__teamXP.flush();const bar=r=>[r.player.level,r.player.xp,r.player.xpNext];assert.deepEqual(bar(a),[2,30,340]);assert.deepEqual(bar(a),bar(b));assert.equal(a.pendingLevels,1);assert.equal(b.pendingLevels,1);
+ b.player.dead=true;fail=true;a.player.addXp(100);await a.__teamXP.flush();await a.__teamXP.flush();await b.__teamXP.flush();assert.deepEqual(bar(a),bar(b));assert.equal(a.player.xp,130);
+ a.player.levelUp();await a.__teamXP.flush();await b.__teamXP.flush();assert.equal(a.player.level,3);assert.equal(a.player.xp,0);assert.deepEqual(bar(a),bar(b));
+ a.player.levelUp();a.player.levelUp();await a.__teamXP.flush();await b.__teamXP.flush();assert.equal(a.player.level,5);assert.deepEqual(bar(a),bar(b));assert.equal(b.player.dead,true);
+});

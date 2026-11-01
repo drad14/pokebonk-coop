@@ -25,17 +25,20 @@
   notice.style.left=Math.max(8,Math.min(innerWidth-185,x-60))+'px';notice.style.top=Math.max(8,y-45)+'px';document.body.append(notice);
   const n=notice;if(!matchMedia('(prefers-reduced-motion: reduce)').matches)n.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(-30px)'}],{duration:1400,easing:'ease-out',fill:'forwards'});setTimeout(()=>n.remove(),1450);
  }
- async function claim(x,y){
+ async function claim(x,y,source='ghost'){
   if(busy)return;const account=window.__pbApp?.meta.account;if(!account)return;
-  busy=true;if(!pending||pending.account!==account.id)pending={account:account.id,requestId:crypto.randomUUID()};
+  busy=true;if(!pending||pending.account!==account.id||pending.source!==source)pending={account:account.id,source,requestId:crypto.randomUUID()};
   try{
-   const response=await fetch('/api/gacha/ghost',{method:'POST',headers:{Authorization:'Bearer '+account.token,'Content-Type':'application/json'},body:JSON.stringify({requestId:pending.requestId})});
+   const response=await fetch('/api/gacha/ghost',{method:'POST',headers:{Authorization:'Bearer '+account.token,'Content-Type':'application/json'},body:JSON.stringify({requestId:pending.requestId,source})});
    const value=await response.json();if(!response.ok)throw Error('Ticket save failed');
-   pending=null;LAN.tickets.adopt(value);pop('+1 purple ticket 👻',x,y);
+   pending=null;LAN.tickets.adopt(value);pop(source==='feedback'?'+100 purple tickets 👻':'+1 purple ticket 👻',x,y);
   }catch{pop('Tap again to save 👻',x,y)}finally{busy=false}
  }
  addEventListener('click',event=>{
-  if(event.button!==0)return;const screen=document.querySelector('.screen.mm:not(.auth)');
+  if(event.button!==0)return;
+  const feedback=event.target.closest?.('.fb-modal .fb-kinds .fb-kind:nth-child(3)');
+  if(feedback){const rect=feedback.getBoundingClientRect();claim(rect.left+rect.width/2,rect.top,'feedback');return}
+  const screen=document.querySelector('.screen.mm:not(.auth)');
   // Respect menu buttons and panels that visually cover the scenery.
   if(event.target!==screen&&event.target?.id!=='game')return;
   if(!hit(event.clientX,event.clientY))return;event.preventDefault();event.stopImmediatePropagation();claim(event.clientX,event.clientY);
