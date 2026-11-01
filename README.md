@@ -1,4 +1,4 @@
-# PokéBonk private 0.5.2
+# PokéBonk private 0.5.3
 
 Private website based on the current official PokéBonk client: verified with **0.8.86 / mvwwqlzz**. Friends receive the update by refreshing your Render address.
 
@@ -6,15 +6,17 @@ Private website based on the current official PokéBonk client: verified with **
 
 **Open party** defaults to on above Play and applies to new Classic and Survival runs. Start normally to create a joinable native session automatically, or turn it off for ordinary solo. **Available games** lists open lobbies and running games on this private server. New arrivals receive the current zone/clock/boss/portal state and a catch-up choice for each team level (level 30 = 30 choices), with optional Random stats or Skip remaining. Native room-code joining remains available. Solo save resumes are left native.
 
-The shared XP bar scales +70% per extra active player and preserves level/fraction when membership changes. Catch-up does not copy the host build: each player keeps their own character, Lab bonuses and choices. Refreshing lets you rejoin with a fresh run build and catch-up choices; it is not a full item/move loadout restore. Active sessions are held in server memory and end on a server restart.
+The shared XP bar scales +70% per extra active player and preserves level/fraction when membership changes. Catch-up does not copy the host build: each player keeps their own character, Lab bonuses and choices. Refreshing lets you rejoin with a fresh run build and catch-up choices; it is not a full item/move loadout restore. Recent room metadata and team XP are checkpointed so browsers that remain in-game can reconnect after a short server restart.
 
 The custom world-mirroring game loop and replacement Party screen are removed. Use the game's **Co-op → Create room / Join with code**, ready buttons, map/difficulty selection, native multiplayer simulation, teammate health bars, boss synchronization, revives and return-to-lobby flow. Codes use the native four-character format. Rooms support **eight players maximum**; the native roster and private capacity controls are expanded to eight. Normal native behavior remains the baseline, with scaling extended for players five through eight.
 
-The private backend supplies room membership, readiness, chat and WebRTC signaling. Direct native WebRTC is preferred. If it cannot open, an authenticated WebSocket fallback carries the same native control and binary snapshot packets through your private server. It does not replace native combat or create a second simulation. The fallback waits eight seconds before taking over an unavailable direct connection and uses backpressure to drop stale snapshots. Rooms and matches end on server restart; saved profiles do not when PostgreSQL is configured.
+The private backend supplies room membership, readiness, chat and WebRTC signaling. Direct native WebRTC is preferred. If it cannot open, an authenticated WebSocket fallback carries the same native control and binary snapshot packets through your private server. It does not replace native combat or create a second simulation. The fallback waits eight seconds before taking over an unavailable direct connection and uses backpressure to drop stale snapshots. With PostgreSQL, rooms and parties checkpoint in a separate generation-guarded session row; browsers that stay in the run can reconnect after a short restart. Checkpoints older than ten minutes are ignored. This preserves membership, party IDs and team XP, not a complete browser simulation if everyone closes the game.
 
 The private service has its own accounts. It does not connect to official accounts, social servers or leaderboards. Native invites to official friends are not reproduced: share your private room code. Public matching, when selected, only matches visitors to this private site. The first/lowest native slot coordinates game events in the normal native way; the owner's PC need not be online.
 
 ## Mods
+
+- **Connection recovery:** heartbeat acknowledgements detect direct links that silently stop carrying data. Fresh relay traffic takes over even if native connection labels disagree. A ten-second relay watchdog rebuilds stuck-open sockets; retry backoff and native redials continue automatically. Verified reconnection revives timed-out native peers and resends state/descriptors without replacing the player build. **Reconnect party** is available beside teammate health and in the pause menu. An account opened in another tab is reported instead of reconnecting the two tabs endlessly against each other.
 
 - **Balanced spawn locations:** regular spawns, swarm rings, stampedes and flying waves rotate origin positions across currently eligible native co-op players. This runs continuously in Classic and Survival without increasing spawn budgets or wave sizes. A 14-unit minimum separation protects nearby players; native terrain/water checks can still skip blocked placements. Boss/environmental hazard placement stays native. Cached ordering avoids repeatedly sorting players for each spawn.
 

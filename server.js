@@ -156,7 +156,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
   try {
-    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',modVersion:'0.5.2',revision:process.env.RENDER_GIT_COMMIT??null,storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
+    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',modVersion:'0.5.3',revision:process.env.RENDER_GIT_COMMIT??null,storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
     if (p.startsWith('/api/')) return await handleApi(req, res, p.slice(4), url);
 
     if (p === '/lan/info') {
@@ -182,7 +182,7 @@ const server = http.createServer(async (req, res) => {
     if (p === '/' || p === '/index.html' || /^\/coop\/[A-Z2-9]{4}\/?$/.test(p)) {
       const file = await cached('index.html');
       let html = fs.readFileSync(file, 'utf8');
-      const scripts = ['controller-fix.js','native-mods.js','native-relay.js','tickets.js','gacha.js','native-menu.js','rankings.js','team-xp.js','joining.js','aggro.js','spawns.js','ghost-tickets.js','damage-meter.js'].map((f) => `<script src="/lan/${f}"></script>`).join('\n');
+      const scripts = ['controller-fix.js','native-mods.js','native-relay.js','tickets.js','gacha.js','native-menu.js','rankings.js','team-xp.js','joining.js','aggro.js','spawns.js','reconnect.js','ghost-tickets.js','damage-meter.js'].map((f) => `<script src="/lan/${f}"></script>`).join('\n');
       html = html.replace('<head>', '<head>\n' + scripts);
       // Fresh URL for the game's entry script whenever the patches change.
       html = html.replace(/(<script type="module"[^>]*src="[^"]+\.js)"/, `$1?lan=${patchTag()}"`);
@@ -210,7 +210,7 @@ attachNativeRelay(wss,nativeRelayMember);
 function shutdown(){
   if(shuttingDown)return;shuttingDown=true;
   let finishing=false;const finish=async()=>{if(finishing)return;finishing=true;try{await flushPendingProfiles();await closeProfiles()}finally{process.exit(0)}};
-  flushPendingProfiles();
+  flushPendingProfiles().catch(()=>console.error('Room checkpoint pending during shutdown'));
   for(const ws of wss.clients)ws.close(1001,'Server restarting');wss.close();server.close(finish);
   setTimeout(()=>process.exit(0),8000).unref();
 }

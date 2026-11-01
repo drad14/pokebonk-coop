@@ -1,3 +1,14 @@
+# 0.5.3 — offline is not a game mode
+
+- Direct co-op links now prove they're passing traffic with heartbeat acknowledgements. A socket saying 'open' no longer gets the final say.
+- A stalled direct connection switches to the authenticated private relay. Relay packets are accepted even if the two browsers disagree about their direct-link status.
+- Stalled relay sockets are rebuilt automatically, native retries continue after their old retry budget runs out, and returning online triggers recovery. Backoff limits retry traffic.
+- Timed-out teammates can become active again when their verified connection returns. Native snapshots and enemy descriptions are sent afresh; reconnecting keeps the current run and build.
+- **Reconnect party** appears beside teammate health and in the native pause menu. The pause-menu button uses normal controller navigation.
+- Rooms, party IDs and shared XP now checkpoint separately from profiles every three seconds; membership changes save before success is returned. Recent rooms reload after a short server restart, allowing browsers that stayed in-game to reconnect. Stale signalling offers are discarded; signal sequence numbers advance across restarts.
+- Newer server generations own their room checkpoint, so an older deployment cannot overwrite it. Room checkpoints expire after ten minutes without a save; they are not full run saves if everyone closes the game.
+- The first upgrade to this version still needs everyone to refresh and start a new run once: earlier versions never saved rooms.
+
 # 0.5.2 — postcode lottery removed
 
 - Corrects spawn locations as well as pursuit targets. Each regular spawn now rotates its origin across available native co-op teammates throughout Classic and Survival runs.

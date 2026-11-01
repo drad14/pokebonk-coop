@@ -2,8 +2,8 @@ import {resizeTeamXp,publishRun,availableRuns} from './run-state.js';
 import {teamXp} from './team-xp.js';
 import crypto from 'node:crypto';
 export const access={show:true,play:true,mode:'open',private:true,maxPlayers:8};
-export function createCoopService(){
- const rooms=new Map(),parties=new Map();const alphabet='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export function createCoopService(snapshot){
+ const recent=snapshot?.version===1&&Date.now()-snapshot.at<600000;const rooms=new Map(recent?snapshot.rooms:[]),parties=new Map(recent?snapshot.parties:[]);for(const party of parties.values()){party.worldAt=0;party.worldBy=null}for(const room of rooms.values()){room.signals=[];room.seq=Math.max(room.seq??0,Date.now());room.version++;for(const m of room.members)m.seen=Date.now()}const alphabet='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
  const error=(message,status=400)=>Object.assign(Error(message),{status});
  function code(){let value;do{value=Array.from({length:4},()=>alphabet[crypto.randomInt(alphabet.length)]).join('')}while(rooms.has(value));return value}
  function member(acc,pick,slot){const p=acc.profile;return {id:acc.id,name:acc.name,guest:acc.guest,species:Number(pick.species)||p.lastSpecies||p.starter||1,skin:pick.skin??null,slot,host:slot===0,ready:slot===0,inRun:false,lateJoin:false,joinNonce:0,avatar:p.avatar??null,frame:p.frame??null,title:p.title??null,maps:p.biomes??{forest:0},at:Date.now(),seen:Date.now()}}
@@ -12,7 +12,7 @@ export function createCoopService(){
  function leave(room,id){const party=parties.get(room.party);room.members=room.members.filter(m=>m.id!==id);if(party)resizeTeamXp(party,room.members.filter(m=>m.inRun).length);if(!room.members.length){rooms.delete(room.code);return}if(room.host===id){room.host=room.members[0].id;for(const m of room.members){m.host=m.id===room.host;if(m.host)m.ready=true}}room.version++}
  function prune(){for(const room of rooms.values())for(const m of room.members.slice())if(Date.now()-m.seen>150000)leave(room,m.id)}
  function add(room,acc,pick){let m=room.members.find(m=>m.id===acc.id);if(m){m.seen=Date.now();if(room.state==='started'){m.lateJoin=true;m.inRun=true;m.joinNonce=(m.joinNonce??0)+1;if(Number.isInteger(pick.species))m.species=pick.species;room.version++;resizeTeamXp(parties.get(room.party),room.members.filter(x=>x.inRun).length)}return m}if(room.state==='started'&&(room.joinable===false||Date.now()-(parties.get(room.party)?.worldAt??0)>10000))throw error('This game has started and is not ready for joining. Try again shortly.',409);if(room.members.length>=(room.want??8))throw error('Lobby full: eight players maximum',409);const slots=new Set(room.members.map(m=>m.slot));let slot=0;while(slots.has(slot))slot++;m=member(acc,pick,slot);m.host=false;m.ready=false;room.members.push(m);if(room.state==='started'){m.inRun=true;m.lateJoin=true;const party=parties.get(room.party);if(!party.members.includes(acc.id))party.members.push(acc.id);resizeTeamXp(party,room.members.filter(x=>x.inRun).length)}room.version++;return m}
- return {rooms,parties,access,async handle(route,method,acc,b={},url){
+ return {rooms,parties,access,snapshot:()=>({version:1,at:Date.now(),rooms:[...rooms].map(([code,room])=>[code,{...room,signals:[]}]),parties:[...parties].filter(([id,p])=>rooms.get(p.room)?.party===id)}),async handle(route,method,acc,b={},url){
   if(!route.startsWith('/coop/'))return null;prune();
   if(!acc)throw error('Sign in to your private account first',401);
   if(route==='/coop/access')return access;

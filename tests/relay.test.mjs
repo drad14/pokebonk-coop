@@ -5,6 +5,7 @@ test('native fallback authenticates room membership and forwards original contro
  const wait=async predicate=>{for(let i=0;i<200;i++){const value=predicate();if(value)return value;await new Promise(r=>setTimeout(r,10))}throw Error('Missing native relay message')};
  try{
  const bad=await connect('bad','TEST');assert.equal((await once(bad.ws,'close'))[0],4003);const a=await connect('a','TEST'),b=await connect('b','TEST'),other=await connect('c','ROOM');await wait(()=>a.messages.some(m=>m.t==='peers'&&m.ids.length===2));
+ a.ws.send(JSON.stringify({t:'ping',n:123}));await wait(()=>a.messages.some(m=>m.t==='pong'&&m.n===123));
  a.ws.send(JSON.stringify({t:'ctl',to:'b',payload:{t:'k',d:54321}}));await wait(()=>b.messages.some(m=>m.t==='ctl'&&m.from==='a'&&m.payload.d===54321));
  a.ws.send(Buffer.from([1,1,42,43,44]));const binary=await wait(()=>b.messages.find(Buffer.isBuffer));assert.deepEqual(binary,Buffer.from([1,0,42,43,44]));
  a.ws.send(JSON.stringify({t:'ctl',to:'c',payload:{t:'k',d:999}}));await new Promise(r=>setTimeout(r,40));assert.ok(!other.messages.some(m=>m.t==='ctl'));

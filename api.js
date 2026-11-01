@@ -1,7 +1,7 @@
 import {privateRankings,recordPrivateRun,RANK_TITLE} from './rankings.js';
 import {createProfileStore} from './profile-store.js';
 import {createCoopService} from './native-coop.js';
-const nativeCoop=createCoopService();
+import {createSessionStore} from './session-store.js';
 import {rollDrops,collectDrops} from './loot.js';
 // Local stand-in for api.pokebonk.com. Accounts live in ./data/accounts.json on
 // the host machine; nothing is sent to the official servers or leaderboards.
@@ -18,12 +18,16 @@ const DB_FILE = path.join(DATA, 'accounts.json');
 if(process.env.RENDER==='true'&&!process.env.DATABASE_URL)throw Error('Set DATABASE_URL in Render before deploying: permanent private saves require PostgreSQL');
 const profileStore=await createProfileStore({connectionString:process.env.DATABASE_URL,file:DB_FILE});
 let db=await profileStore.load();
+const sessionStore=await createSessionStore({connectionString:process.env.DATABASE_URL,file:path.join(DATA,'sessions.json')});
+const nativeCoop=createCoopService(await sessionStore.load());let sessionDirty=false,sessionSave=Promise.resolve();
+function checkpointSessions(force=false){if(!sessionDirty&&!force)return sessionSave;sessionDirty=false;const snapshot=JSON.parse(JSON.stringify(nativeCoop.snapshot()));sessionSave=sessionSave.catch(()=>{}).then(()=>sessionStore.save(snapshot)).catch(error=>{sessionDirty=true;throw error});return sessionSave}
+const sessionTimer=setInterval(()=>{checkpointSessions().catch(()=>console.error('Private room checkpoint pending; will retry'))},3000);sessionTimer.unref();
 export const storageKind=profileStore.kind;
 let saveError=false;
 export const storageHealthy=()=>!saveError;
 async function persist(){try{await profileStore.save(db);saveError=false}catch(error){saveError=true;throw error}}
-export async function flushPendingProfiles(){}
-export async function closeProfiles(){await profileStore.close()}
+export async function flushPendingProfiles(){await profileQueue;await checkpointSessions(true)}
+export async function closeProfiles(){clearInterval(sessionTimer);await sessionSave.catch(()=>{});await sessionStore.close();await profileStore.close()}
 
 async function newAccount(name, guest) {
   const id = crypto.randomUUID();
@@ -99,7 +103,7 @@ async function handleApiInner(req, res, route, url) {
     info: { n: 0, name: 'Private', live: false }, entries: [], players: 0, me: null });
   if (route === '/seasons/awards' && m === 'GET') return json(res, 200, []);
   if (route === '/runs/saved' && m === 'GET') return json(res, 200, { saved: null });
-  if(route.startsWith('/coop/')){try{return json(res,200,await nativeCoop.handle(route,m,acc,m==='POST'?await body(req):{},url))}catch(error){return json(res,error.status||500,{error:error.status?error.message:'Private co-op service failed'})}}
+  if(route.startsWith('/coop/')){try{const value=await nativeCoop.handle(route,m,acc,m==='POST'?await body(req):{},url);if(m==='POST'&&!route.endsWith('/signal')){sessionDirty=true;if(route==='/coop/rooms'||route==='/coop/quick'||/^\/coop\/rooms\/[^/]+\/(join|leave|start|again|kick|settings|me|open|joinable)$/.test(route))await checkpointSessions(true)}return json(res,200,value)}catch(error){return json(res,error.status||500,{error:error.status?error.message:'Private co-op service failed'})}}
 
   if (route === '/auth/guest' && m === 'POST') {
     const a = await newAccount('Guest' + Math.floor(Math.random() * 9000 + 1000), true);
