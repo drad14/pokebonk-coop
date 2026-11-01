@@ -1,3 +1,10 @@
+# 0.5.1 — sharing is scaring
+
+- Regular co-op hordes now divide their targets evenly across available players instead of all dogpiling whoever happens to be nearest. Yes, your teammate has to play the game too.
+- Assignments stay stable while players move. Excess pursuers rebalance once per second as enemies die, new ones spawn, or the available team changes.
+- Native targeting still determines who is available: downed/disconnected players and players protected while choosing are excluded when other targets are available. Bosses, capture targets, stationary objects and remote replicas retain their native behavior.
+- Uses the existing native enemy AI and multiplayer packets. No extra enemies, stat buffs or new visual effects.
+
 # 0.5.0 — the party starts before the group chat answers
 
 - **Open party** is on by default, right above Play. Starting Classic or Survival automatically opens a native co-op session. Turn it off for a normal solo run. Existing solo saves keep their native resume flow.

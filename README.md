@@ -1,4 +1,4 @@
-# PokéBonk private 0.5.0
+# PokéBonk private 0.5.1
 
 Private website based on the current official PokéBonk client: verified with **0.8.86 / mvwwqlzz**. Friends receive the update by refreshing your Render address.
 
@@ -15,6 +15,8 @@ The private backend supplies room membership, readiness, chat and WebRTC signali
 The private service has its own accounts. It does not connect to official accounts, social servers or leaderboards. Native invites to official friends are not reproduced: share your private room code. Public matching, when selected, only matches visitors to this private site. The first/lowest native slot coordinates game events in the normal native way; the owner's PC need not be online.
 
 ## Mods
+
+- **Balanced horde aggro:** native-owned regular enemies divide evenly among the native list of available targets. Stable assignments rebalance once per second; nearest distance breaks ties. Remainder quotas rotate across horde owners. Bosses and non-horde entities retain native targeting. This distributes pursuers rather than guaranteeing identical kill counts, damage taken, or travel times.
 
 - **Team damage leaderboard:** compact panel on the left, sorted by native total damage. Overtaking another player moves your row above theirs. Updates twice per second using native totals; it does not introduce a second damage stream. Larger parties get a compact teammate-health layout.
 - **Controller recovery:** ignores small left-stick drift, clears stale native input on focus/disconnection/reconnection, and waits for neutral sticks/buttons before resuming. **F8** resets controller input without unplugging; release the stick and buttons afterward. Driver/hardware faults can still require device troubleshooting.
