@@ -1,3 +1,13 @@
+# 0.5.0 — the party starts before the group chat answers
+
+- **Open party** is on by default, right above Play. Starting Classic or Survival automatically opens a native co-op session. Turn it off for a normal solo run. Existing solo saves keep their native resume flow.
+- **Available games** lists this private server's open lobbies and active runs. Pick a Pokémon and join directly; room codes still work too. Eight players maximum. No ninth wheel.
+- Mid-run arrivals enter the current zone with the current run clock, director progression, portal/boss state and native teammate health/combat sync. Boss health keeps its existing percentage when the party grows.
+- Joining at team level 30 grants 30 catch-up choices. Pick normally, use **Random stats** for the remaining vitamin upgrades, or **Skip remaining**. Skipping catch-up does not spend normal skips. Random stats skips when no vitamin upgrade is available; it does not force attacks into your build.
+- Shared XP preserves the team's level and exact bar progress when people join or leave. The XP requirement still scales by +70% per additional active player. Refreshing/rejoining retains your previous XP contribution baseline.
+- Native room membership now refreshes promptly during runs, so new teammates don't spend a minute starring in 'Reconnecting…'. Rejoins reuse your account slot.
+- New controls use the native switches, buttons, panels, colours and fonts. The UI has joined the same game as the rest of us.
+
 # 0.4.5 — same team, same XP, different bragging rights
 
 - The Gay Boys Rank replaces the empty official ladder in the private main menu. Compare each trainer's best completed survival time and single-run damage. Guests count here too.

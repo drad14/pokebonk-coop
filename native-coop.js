@@ -1,3 +1,4 @@
+import {resizeTeamXp,publishRun,availableRuns} from './run-state.js';
 import {teamXp} from './team-xp.js';
 import crypto from 'node:crypto';
 export const access={show:true,play:true,mode:'open',private:true,maxPlayers:8};
@@ -5,16 +6,18 @@ export function createCoopService(){
  const rooms=new Map(),parties=new Map();const alphabet='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
  const error=(message,status=400)=>Object.assign(Error(message),{status});
  function code(){let value;do{value=Array.from({length:4},()=>alphabet[crypto.randomInt(alphabet.length)]).join('')}while(rooms.has(value));return value}
- function member(acc,pick,slot){const p=acc.profile;return {id:acc.id,name:acc.name,guest:acc.guest,species:Number(pick.species)||p.lastSpecies||p.starter||1,skin:pick.skin??null,slot,host:slot===0,ready:slot===0,avatar:p.avatar??null,frame:p.frame??null,title:p.title??null,maps:p.biomes??{forest:0},at:Date.now(),seen:Date.now()}}
- function view(room){return {code:room.code,host:room.host,state:room.state,version:room.version,pub:room.pub,want:room.want??8,biome:room.biome,tier:room.tier,party:room.party,leadLeft:null,members:room.members.map(({seen,at,...m})=>m)}}
+ function member(acc,pick,slot){const p=acc.profile;return {id:acc.id,name:acc.name,guest:acc.guest,species:Number(pick.species)||p.lastSpecies||p.starter||1,skin:pick.skin??null,slot,host:slot===0,ready:slot===0,inRun:false,lateJoin:false,joinNonce:0,avatar:p.avatar??null,frame:p.frame??null,title:p.title??null,maps:p.biomes??{forest:0},at:Date.now(),seen:Date.now()}}
+ function view(room){return {code:room.code,host:room.host,state:room.state,version:room.version,pub:room.pub,joinable:room.joinable!==false,want:room.want??8,biome:room.biome,tier:room.tier,party:room.party,leadLeft:null,members:room.members.map(({seen,at,...m})=>m)}}
  function response(room,acc,after=0,chat=0){return {room:view(room),me:acc.id,signals:room.signals.filter(s=>s.to===acc.id&&s.id>after),chat:room.chat.filter(s=>s.id>chat)}}
- function leave(room,id){room.members=room.members.filter(m=>m.id!==id);if(!room.members.length){rooms.delete(room.code);return}if(room.host===id){room.host=room.members[0].id;for(const m of room.members){m.host=m.id===room.host;if(m.host)m.ready=true}}room.version++}
+ function leave(room,id){const party=parties.get(room.party);room.members=room.members.filter(m=>m.id!==id);if(party)resizeTeamXp(party,room.members.filter(m=>m.inRun).length);if(!room.members.length){rooms.delete(room.code);return}if(room.host===id){room.host=room.members[0].id;for(const m of room.members){m.host=m.id===room.host;if(m.host)m.ready=true}}room.version++}
  function prune(){for(const room of rooms.values())for(const m of room.members.slice())if(Date.now()-m.seen>150000)leave(room,m.id)}
- function add(room,acc,pick){let m=room.members.find(m=>m.id===acc.id);if(m){m.seen=Date.now();return m}if(room.state!=='lobby')throw error('This run has already started. Join the next run.',409);if(room.members.length>=(room.want??8))throw error('Lobby full: eight players maximum',409);const slots=new Set(room.members.map(m=>m.slot));let slot=0;while(slots.has(slot))slot++;m=member(acc,pick,slot);m.host=false;m.ready=false;room.members.push(m);room.version++;return m}
+ function add(room,acc,pick){let m=room.members.find(m=>m.id===acc.id);if(m){m.seen=Date.now();if(room.state==='started'){m.lateJoin=true;m.inRun=true;m.joinNonce=(m.joinNonce??0)+1;if(Number.isInteger(pick.species))m.species=pick.species;room.version++;resizeTeamXp(parties.get(room.party),room.members.filter(x=>x.inRun).length)}return m}if(room.state==='started'&&(room.joinable===false||Date.now()-(parties.get(room.party)?.worldAt??0)>10000))throw error('This game has started and is not ready for joining. Try again shortly.',409);if(room.members.length>=(room.want??8))throw error('Lobby full: eight players maximum',409);const slots=new Set(room.members.map(m=>m.slot));let slot=0;while(slots.has(slot))slot++;m=member(acc,pick,slot);m.host=false;m.ready=false;room.members.push(m);if(room.state==='started'){m.inRun=true;m.lateJoin=true;const party=parties.get(room.party);if(!party.members.includes(acc.id))party.members.push(acc.id);resizeTeamXp(party,room.members.filter(x=>x.inRun).length)}room.version++;return m}
  return {rooms,parties,access,async handle(route,method,acc,b={},url){
   if(!route.startsWith('/coop/'))return null;prune();
   if(!acc)throw error('Sign in to your private account first',401);
   if(route==='/coop/access')return access;
+  if(route==='/coop/available'&&method==='GET')return {runs:availableRuns(rooms,parties)};
+  if(route==='/coop/run-state'){const party=parties.get(b.party??url.searchParams.get('party')),room=party&&rooms.get(party.room);if(!party?.members.includes(acc.id)||!room)throw error('Run not found',404);if(method==='POST')return publishRun(party,acc.id,b.world,room);if(!party.world||Date.now()-party.worldAt>10000)throw error('The run is loading; retry shortly',409);return {world:party.world,at:party.worldAt,party:room.party,room:view(room),contribution:party.teamXp?.members[acc.id]?.earned??0,xp:teamXp(party,acc.id,{earned:party.teamXp?.members[acc.id]?.earned??0,startLevel:party.teamXp?.members[acc.id]?.startLevel??1})};}
   if(route==='/coop/ice'){let servers=[];if(process.env.COOP_ICE_SERVERS_JSON){servers=JSON.parse(process.env.COOP_ICE_SERVERS_JSON);if(!Array.isArray(servers))throw error('Invalid private ICE configuration',503)}return {servers}}
   if(route==='/coop/invites')return [];
   if(route==='/coop/seeking')return {total:0,count:0,modes:[],groups:[]};
@@ -39,11 +42,12 @@ export function createCoopService(){
   if(!action&&method==='GET')return response(room,acc,Number(url.searchParams.get('after'))||0,Number(url.searchParams.get('chat'))||0);
   switch(action){
    case 'me': if(Number.isInteger(b.species)&&b.species>0)mine.species=b.species;if(Object.hasOwn(b,'skin'))mine.skin=b.skin??null;if(typeof b.ready==='boolean')mine.ready=mine.host||b.ready;room.version++;break;
+   case 'joinable':host();room.joinable=b.on!==false;room.version++;break;
    case 'settings':host();if(typeof b.biome==='string'&&/^[a-z-]{1,30}$/.test(b.biome))room.biome=b.biome;if(Number.isInteger(b.tier)&&b.tier>=0&&b.tier<=3)room.tier=b.tier;for(const m of room.members)if(!m.host)m.ready=false;room.version++;break;
    case 'signal':if(!room.members.some(m=>m.id===b.to)||!['offer','answer','bye'].includes(b.kind)||typeof b.data!=='string'||b.data.length>100000)throw error('Invalid connection signal');room.signals.push({id:++room.seq,from:acc.id,to:b.to,kind:b.kind,data:b.data});room.signals=room.signals.slice(-1000);break;
    case 'chat':{const text=String(b.text??'').trim().slice(0,140);if(text)room.chat.push({id:++room.seq,from:acc.id,name:acc.name,text,at:Date.now()});room.chat=room.chat.slice(-80);break}
-   case 'start':host();if(room.members.length<2||room.members.some(m=>!m.host&&!m.ready))throw error('Everyone must be ready before starting',409);if(room.state==='started')return response(room,acc);room.party=crypto.randomUUID();room.state='started';room.version++;parties.set(room.party,{seed:crypto.randomInt(1,2**31),biome:room.biome,tier:room.tier,members:room.members.map(m=>m.id)});if(parties.size>1000)parties.delete(parties.keys().next().value);break;
-   case 'again':room.state='lobby';room.party=null;for(const m of room.members)m.ready=m.host;room.version++;break;
+   case 'start':host();if(room.members.length<(b.solo?1:2)||room.members.some(m=>!m.host&&!m.ready))throw error('Everyone must be ready before starting',409);if(room.state==='started')return response(room,acc);room.party=crypto.randomUUID();room.state='started';room.version++;for(const m of room.members){m.inRun=true;m.lateJoin=false}parties.set(room.party,{room:room.code,xpSize:room.members.length,seed:crypto.randomInt(1,2**31),biome:room.biome,tier:room.tier,members:room.members.map(m=>m.id)});if(parties.size>1000)parties.delete(parties.keys().next().value);break;
+   case 'again':mine.inRun=false;mine.lateJoin=false;if(room.members.some(m=>m.inRun)){resizeTeamXp(parties.get(room.party),room.members.filter(m=>m.inRun).length)}else{room.state='lobby';room.party=null;for(const m of room.members)m.ready=m.host}room.version++;break;
    case 'leave':leave(room,acc.id);return {};
    case 'kick':host();if(b.user===room.host)throw error('The host must leave instead');leave(room,b.user);break;
    case 'open':host();room.pub=b.on?2:0;if([2,3,4,8].includes(b.size)&&b.size>=room.members.length)room.want=b.size;room.version++;break;

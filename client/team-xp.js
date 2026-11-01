@@ -6,7 +6,8 @@
   const app=window.__pbApp,coop=run.coop,player=run.player,party=coop.party;
   const methods=LAN.game.xpMethods,curve=player[methods.curve]?.bind(player),levelUp=player[methods.level]?.bind(player);
   if(!party||!curve||!levelUp)return;
-  const state=run.__teamXP={earned:0,startLevel:player.level,scale:1+.7*(coop.size-1),lastLevel:player.level,total:0,acked:0,baseLevel:player.level,busy:false,stopped:false,lastKey:''};
+  const state=run.__teamXP={earned:run.__joinState?.contribution??0,startLevel:run.__joinState?.xp?.baseLevel??player.level,scale:run.__joinState?.xp?.scale??1+.7*(coop.size-1),lastLevel:player.level,total:0,acked:run.__joinState?.contribution??0,baseLevel:player.level,busy:false,stopped:false,lastKey:''};
+  state.baseCurve=curve;
   player[methods.curve]=level=>Math.max(1,Math.round(curve(level)*state.scale));player.xpNext=player[methods.curve](player.level);
   function project(total){let level=state.baseLevel,xp=total,next=player[methods.curve](level),steps=0;while(xp>=next&&steps++<10000){xp-=next;next=player[methods.curve](++level)}return {level,xp,next}}
   const predicted=()=>project(state.total+Math.max(0,state.earned-state.acked));
@@ -21,7 +22,7 @@
    state.scale=value.scale;state.total=value.total;state.baseLevel=value.baseLevel;state.acked=Math.max(state.acked,sent);captureBonus();
    const key=[value.total,value.baseLevel,value.scale].join(':');if(key===state.lastKey)return;
    const p=project(value.total);if(p.level<player.level)return;
-   while(player.level<p.level)levelUp();player.xp=p.xp;player.xpNext=p.next;state.lastLevel=player.level;state.lastKey=key;
+   while(player.level<p.level)levelUp();player.xp=p.xp;player.xpNext=p.next;state.lastLevel=player.level;state.lastKey=key;if(run.__catchup&&!run.__catchup.ready){run.__catchup.ready=true;run.__catchup.remaining=player.level;run.pendingLevels++;run.choicesQueued++}
    const ring=app.hud?.els?.xp;if(ring){ring.title='Shared team XP · '+state.scale.toFixed(1)+'× XP requirement';ring.setAttribute('aria-label',ring.title)}
   }
   async function flush(){
@@ -32,7 +33,7 @@
    }catch{if(!state.stopped&&Date.now()-(state.warned??0)>15000){state.warned=Date.now();run.ui?.toast('Team XP syncing — earned XP is kept and retried.',null)}}finally{state.busy=false}
   }
   state.flush=flush;
-  const timer=setInterval(()=>{if(window.__pbApp?.run!==run||run.state==='over'){state.stopped=true;clearInterval(timer);flush();return}flush()},250);flush();
+  const timer=setInterval(()=>{if(window.__pbApp?.run!==run||run.state==='over'){state.stopped=true;clearInterval(timer);flush();return}flush()},250);if(run.__joinState?.xp)apply(run.__joinState.xp,state.earned);flush();
  }
  LAN.teamXp={install};
 })();

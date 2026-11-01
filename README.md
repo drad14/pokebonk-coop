@@ -1,8 +1,12 @@
-# PokéBonk private 0.4.0
+# PokéBonk private 0.5.0
 
-Private website based on the current official PokéBonk client: verified with **0.8.83 / mvv70wso**. Friends receive the update by refreshing your Render address.
+Private website based on the current official PokéBonk client: verified with **0.8.86 / mvwwqlzz**. Friends receive the update by refreshing your Render address.
 
 ## Native co-op
+
+**Open party** defaults to on above Play and applies to new Classic and Survival runs. Start normally to create a joinable native session automatically, or turn it off for ordinary solo. **Available games** lists open lobbies and running games on this private server. New arrivals receive the current zone/clock/boss/portal state and a catch-up choice for each team level (level 30 = 30 choices), with optional Random stats or Skip remaining. Native room-code joining remains available. Solo save resumes are left native.
+
+The shared XP bar scales +70% per extra active player and preserves level/fraction when membership changes. Catch-up does not copy the host build: each player keeps their own character, Lab bonuses and choices. Refreshing lets you rejoin with a fresh run build and catch-up choices; it is not a full item/move loadout restore. Active sessions are held in server memory and end on a server restart.
 
 The custom world-mirroring game loop and replacement Party screen are removed. Use the game's **Co-op → Create room / Join with code**, ready buttons, map/difficulty selection, native multiplayer simulation, teammate health bars, boss synchronization, revives and return-to-lobby flow. Codes use the native four-character format. Rooms support **eight players maximum**; the native roster and private capacity controls are expanded to eight. Normal native behavior remains the baseline, with scaling extended for players five through eight.
 

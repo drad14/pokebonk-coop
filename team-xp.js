@@ -6,5 +6,5 @@ export function teamXp(party,id,body){
  const state=party.teamXp??={members:{}};const old=state.members[id]??={earned:0,startLevel:1};
  state.members[id]={earned:Math.max(old.earned,body.earned),startLevel:Math.max(old.startLevel,Math.trunc(body.startLevel))};
  const values=Object.values(state.members);
- return {total:values.reduce((n,x)=>n+x.earned,0),baseLevel:Math.max(1,...values.map(x=>x.startLevel)),scale:1+.7*(party.members.length-1),size:party.members.length};
+ return {total:values.reduce((n,x)=>n+x.earned,0)+(party.xpOffset??0),baseLevel:Math.max(1,...values.map(x=>x.startLevel)),scale:1+.7*((party.xpSize??party.members.length)-1),size:party.xpSize??party.members.length};
 }
