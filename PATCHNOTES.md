@@ -1,3 +1,11 @@
+# 0.5.2 — postcode lottery removed
+
+- Corrects spawn locations as well as pursuit targets. Each regular spawn now rotates its origin across available native co-op teammates throughout Classic and Survival runs.
+- Swarm rings, stampedes and flying-wave enemies are distributed across the team too. The total wave sizes, spawn budget, native stats and graphics are unchanged.
+- Regular spawns and these horde waves check a safe distance from every nearby teammate, including one protected while choosing. Native terrain/water checks remain in place; blocked placements can still be skipped.
+- Spawn ordering is cached until the eligible team changes, with a small counter per spawn stream. No extra enemies or per-frame wave rebuilds.
+- Boss placements and environmental hazard telegraphs retain native behavior.
+
 # 0.5.1 — sharing is scaring
 
 - Regular co-op hordes now divide their targets evenly across available players instead of all dogpiling whoever happens to be nearest. Yes, your teammate has to play the game too.

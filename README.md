@@ -1,4 +1,4 @@
-# PokéBonk private 0.5.1
+# PokéBonk private 0.5.2
 
 Private website based on the current official PokéBonk client: verified with **0.8.86 / mvwwqlzz**. Friends receive the update by refreshing your Render address.
 
@@ -15,6 +15,8 @@ The private backend supplies room membership, readiness, chat and WebRTC signali
 The private service has its own accounts. It does not connect to official accounts, social servers or leaderboards. Native invites to official friends are not reproduced: share your private room code. Public matching, when selected, only matches visitors to this private site. The first/lowest native slot coordinates game events in the normal native way; the owner's PC need not be online.
 
 ## Mods
+
+- **Balanced spawn locations:** regular spawns, swarm rings, stampedes and flying waves rotate origin positions across currently eligible native co-op players. This runs continuously in Classic and Survival without increasing spawn budgets or wave sizes. A 14-unit minimum separation protects nearby players; native terrain/water checks can still skip blocked placements. Boss/environmental hazard placement stays native. Cached ordering avoids repeatedly sorting players for each spawn.
 
 - **Balanced horde aggro:** native-owned regular enemies divide evenly among the native list of available targets. Stable assignments rebalance once per second; nearest distance breaks ties. Remainder quotas rotate across horde owners. Bosses and non-horde entities retain native targeting. This distributes pursuers rather than guaranteeing identical kill counts, damage taken, or travel times.
 
