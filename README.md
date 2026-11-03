@@ -38,6 +38,10 @@ Render deployments require DATABASE_URL. A local installation without it uses da
 
 On each server startup, the server fetches the official version and current entry/game bundles. It activates an update only when every required mod/protocol compatibility check passes. Game version appears on the menu and /healthz. Unsupported changes are reported in updateError and leave the last verified copy active rather than silently breaking a live game. New upstream changes can still require adapting a mod; arbitrary future versions cannot be guaranteed compatible. Running matches are not switched between game builds mid-session.
 
+## Koyeb
+
+See KOYEB-SETUP.md for a free-instance migration using the existing Neon database. The Docker image includes all root runtime modules and the complete client folder. Koyeb public URLs are detected automatically; hosted startup refuses an absent DATABASE_URL rather than silently creating empty local saves. Use the read-only scripts/backup-saves.mjs before cutover. Account creation, provider access and the live database still need verification.
+
 ## Render
 
 Use the included render.yaml (Node, Free) or build with npm ci and start with npm start. Set DATABASE_URL first. HOST=0.0.0.0, Render's port, and RENDER_EXTERNAL_URL are supported. Free hosting can sleep while unused and take time to wake. Direct peer traffic avoids server relay bandwidth; fallback traffic uses your hosting allowance.

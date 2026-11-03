@@ -11,7 +11,7 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { patchBundle, isGameBundle, patchPrivateLoader } from './patches.js';
 import { nativeRelayMember,handleApi, flushPendingProfiles,closeProfiles,storageKind,storageHealthy } from './api.js';
-import { publicOrigin } from './runtime-config.js';
+import { hostedOrigin } from './runtime-config.js';
 const MAX_PLAYERS=8;
 import { startTunnel } from './tunnel.js';
 
@@ -23,7 +23,7 @@ const ORIGIN = 'https://pokebonk.com';
 const PORT = Number(process.env.PORT || 8777);
 const HOST = process.env.HOST || '127.0.0.1';
 const QUICK_TUNNEL = process.argv.includes('--internet');
-const PUBLIC_URL = publicOrigin(process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL);
+const PUBLIC_URL = hostedOrigin(process.env);
 const INTERNET = QUICK_TUNNEL || !!PUBLIC_URL;
 if(QUICK_TUNNEL&&PUBLIC_URL)throw Error('Use PUBLIC_URL for cloud hosting or --internet for a temporary tunnel, not both');
 let publicUrl = PUBLIC_URL;
@@ -156,7 +156,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://x');
   const p = url.pathname;
   try {
-    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',modVersion:'0.5.3',revision:process.env.RENDER_GIT_COMMIT??null,storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
+    if(p==='/healthz')return send(res,shuttingDown||patchFailures.length||!storageHealthy()?503:200,JSON.stringify({status:shuttingDown?'stopping':patchFailures.length?'incompatible':'ok',service:'pokebonk-coop',modVersion:'0.5.3',revision:process.env.RENDER_GIT_COMMIT??process.env.KOYEB_GIT_SHA??null,storage:storageKind,gameVersion:activeBuild.version,latestVersion:activeBuild.latest,updateError:activeBuild.updateError,nativeCoop:true,build:await currentBuild()}),TYPES['.json']);
     if (p.startsWith('/api/')) return await handleApi(req, res, p.slice(4), url);
 
     if (p === '/lan/info') {

@@ -1,5 +1,6 @@
 import {privateRankings,recordPrivateRun,RANK_TITLE} from './rankings.js';
 import {createProfileStore} from './profile-store.js';
+import {hostedEnvironment} from './runtime-config.js';
 import {createCoopService} from './native-coop.js';
 import {createSessionStore} from './session-store.js';
 import {rollDrops,collectDrops} from './loot.js';
@@ -15,7 +16,7 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const DATA = process.env.PBCOOP_DATA_DIR || path.join(ROOT, 'data');
 const DB_FILE = path.join(DATA, 'accounts.json');
 
-if(process.env.RENDER==='true'&&!process.env.DATABASE_URL)throw Error('Set DATABASE_URL in Render before deploying: permanent private saves require PostgreSQL');
+if(hostedEnvironment(process.env)&&!process.env.DATABASE_URL)throw Error('Set DATABASE_URL before deploying: permanent private saves require PostgreSQL');
 const profileStore=await createProfileStore({connectionString:process.env.DATABASE_URL,file:DB_FILE});
 let db=await profileStore.load();
 const sessionStore=await createSessionStore({connectionString:process.env.DATABASE_URL,file:path.join(DATA,'sessions.json')});
